@@ -26,13 +26,11 @@ namespace Celeste.Mod.HonlyHelper
         {
             RisingBlock.Load();
             FloatyBgTile.Load();
-            ActualWings.Load();
         }
         public override void Unload()
         {
             RisingBlock.Unload();
             FloatyBgTile.Unload();
-            ActualWings.Unload();
         }
         
     }

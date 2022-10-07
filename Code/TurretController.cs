@@ -2,40 +2,32 @@
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.HonlyHelper
-{
-    [CustomEntity("HonlyHelper/TurretController")]
+namespace Celeste.Mod.HonlyHelper {
     [Tracked]
-    class TurretController : Trigger
-    {
-        private string turretID;
+    [CustomEntity("HonlyHelper/TurretController")]
+    public class TurretController : Trigger {
+        private readonly string turretID;
         private Turret turret;
-        private string turretActionRead;
+        private readonly string turretActionRead;
 
-        public TurretController(EntityData data, Vector2 offset) : base(data, offset)
-        {
+        public TurretController(EntityData data, Vector2 offset) : base(data, offset) {
             turretID = data.Attr("turretID");
             turretActionRead = data.Attr("turretAction");
         }
 
-        public override void Added(Scene scene)
-        {
+        public override void Added(Scene scene) {
             base.Added(scene);
 
-            foreach (Turret t in SceneAs<Level>().Tracker.GetEntities<Turret>())
-            {
-                if (t.turretID == turretID)
-                {
+            foreach (Turret t in SceneAs<Level>().Tracker.GetEntities<Turret>()) {
+                if (t.turretID == turretID) {
                     turret = t;
                 }
             }
         }
 
-        public override void OnEnter(Player player)
-        {
+        public override void OnEnter(Player player) {
             base.OnEnter(player);
-            switch (turretActionRead)
-            {
+            switch (turretActionRead) {
                 case "HeliFadeIn":
                     turret.Helicopter_FadeIn();
                     break;
@@ -52,7 +44,6 @@ namespace Celeste.Mod.HonlyHelper
                     turret.Gun_Only_Off();
                     break;
                 default:
-                    // do literally nothing lmao
                     break;
             }
         }

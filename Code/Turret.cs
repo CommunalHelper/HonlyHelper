@@ -1,44 +1,41 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Celeste.Mod.Entities;
+using FMOD.Studio;
+using Microsoft.Xna.Framework;
 using Monocle;
 using System;
-using Celeste.Mod.Entities;
-using FMOD.Studio;
 
-namespace Celeste.Mod.HonlyHelper
-{
-    [Tracked(false)]
+namespace Celeste.Mod.HonlyHelper {
+    [Tracked]
     [CustomEntity("HonlyHelper/Turret")]
-    public class Turret : Entity
-    {
+    public class Turret : Entity {
         public StateMachine StateMachine;
 
-        private Sprite TurretSprite;
+        private readonly Sprite TurretSprite;
 
         public float DelayTimer;
 
         public float angle;
 
-        private Vector2[] sample = new Vector2[5];
-        private bool[] samplegot = { false, false, false, false };
+        private readonly Vector2[] sample = new Vector2[5];
+        private readonly bool[] samplegot = { false, false, false, false };
 
-        private float desiredBulletSpeed;
-        private float randomDelay;
-        private float cooldownTime;
-        private float aimTime;
-        private float accelerationMultiplier;
+        private readonly float desiredBulletSpeed;
+        private readonly float randomDelay;
+        private readonly float cooldownTime;
+        private readonly float aimTime;
+        private readonly float accelerationMultiplier;
 
         private bool activated;
         private bool countbool;
         private bool countbool2;
         public string turretID;
 
-        private int seed;
+        private readonly int seed;
 
         private EventInstance helicopterInstance;
 
         public Turret(Vector2 position, float desiredBulletSpeed, float randomDelay, string turretID, float cooldownTime, float aimTime, float accelerationMultipler)
-            : base(position)
-        {
+            : base(position) {
             StateMachine = new StateMachine(3);
             StateMachine.SetCallbacks(0, IdleUpdate);
             StateMachine.SetCallbacks(1, DelayUpdate, null, DelayBegin);
@@ -53,7 +50,7 @@ namespace Celeste.Mod.HonlyHelper
             this.turretID = turretID;
             this.desiredBulletSpeed = desiredBulletSpeed;
             this.randomDelay = randomDelay;
-            this.accelerationMultiplier = accelerationMultipler;
+            accelerationMultiplier = accelerationMultipler;
 
             // sprites n stuff later or maybe not
             TurretSprite = new Sprite(GFX.Game, "objects/HonlyHelper/Turret/");
@@ -66,9 +63,8 @@ namespace Celeste.Mod.HonlyHelper
 
             seed = 0;
             int inc = 1;
-            foreach (char c in turretID)
-            {
-                seed += inc*Int16.Parse(Convert.ToString(c, 10));
+            foreach (char c in turretID) {
+                seed += inc * short.Parse(Convert.ToString(c, 10));
                 inc++;
             }
 
@@ -77,54 +73,29 @@ namespace Celeste.Mod.HonlyHelper
         }
 
         public Turret(EntityData data, Vector2 offset)
-            : this(data.Position + offset, data.Float("desiredBulletSpeed", 1.0f), data.Float("randomCooldownMultiplier", 0f), data.Attr("turretID"), data.Float("cooldownTime"), data.Float("aimTime"), data.Float("accelerationMultiplier"))
-        {
+            : this(data.Position + offset, data.Float("desiredBulletSpeed", 1.0f), data.Float("randomCooldownMultiplier", 0f), data.Attr("turretID"), data.Float("cooldownTime"), data.Float("aimTime"), data.Float("accelerationMultiplier")) {
         }
 
-        public override void Added(Scene scene)
-        {
+        public override void Added(Scene scene) {
             base.Added(scene);
-            TurretSprite.Position = -16 * Vector2.UnitX - 16 * Vector2.UnitY;
+            TurretSprite.Position = (-16 * Vector2.UnitX) - (16 * Vector2.UnitY);
             TurretSprite.Play("Idle");
         }
 
-        public override void Removed(Scene scene)
-        {
+        public override void Removed(Scene scene) {
             base.Removed(scene);
-            if (helicopterInstance != null)
-            {
+            if (helicopterInstance != null) {
                 Audio.Stop(helicopterInstance, true);
             }
+
             activated = false;
             countbool = false;
             countbool2 = false;
         }
 
-        public override void Render()
-        {
-            Vector2 position = Position;
-            base.Render();
-            Position = position;
-        }
-
-        public void SetOrigins(Vector2 origin)
-        {
-            foreach (Component component in Components)
-            {
-                if (component is Image image)
-                {
-                    Vector2 vector = origin - Position;
-                    image.Origin = image.Origin + vector - image.Position;
-                    image.Position = vector;
-                }
-            }
-        }
-
-        public void Helicopter_FadeIn()
-        {
-            if (!activated && !countbool && !countbool2)
-            {
-                helicopterInstance = Audio.Play("event:/HonlyHelper/helicopter", base.Center);
+        public void Helicopter_FadeIn() {
+            if (!activated && !countbool && !countbool2) {
+                helicopterInstance = Audio.Play("event:/HonlyHelper/helicopter", Center);
                 Audio.SetParameter(helicopterInstance, "Helicopter_Fade", 0f);
                 Audio.SetParameter(helicopterInstance, "Helicopter_Mute", 0f);
                 countbool = true;
@@ -132,197 +103,161 @@ namespace Celeste.Mod.HonlyHelper
             }
         }
 
-        public void Helicopter_On()
-        {
-            if (!activated && !countbool && !countbool2)
-            {
-                helicopterInstance = Audio.Play("event:/HonlyHelper/helicopter", base.Center);
+        public void Helicopter_On() {
+            if (!activated && !countbool && !countbool2) {
+                helicopterInstance = Audio.Play("event:/HonlyHelper/helicopter", Center);
                 Audio.SetParameter(helicopterInstance, "Helicopter_Fade", 1f);
                 Audio.SetParameter(helicopterInstance, "Helicopter_Mute", 1f);
                 activated = true;
             }
         }
 
-        public void Gun_Only_On()
-        {
+        public void Gun_Only_On() {
             activated = true;
             countbool = false;
             countbool2 = false;
         }
 
-        public void Gun_Only_Off()
-        {
+        public void Gun_Only_Off() {
             activated = false;
             countbool = false;
             countbool2 = false;
         }
 
-        public void Helicopter_Leave()
-        {
-            if (helicopterInstance != null)
-            {
+        public void Helicopter_Leave() {
+            if (helicopterInstance != null) {
                 Audio.SetParameter(helicopterInstance, "Helicopter_Fade", 0f);
                 Audio.Stop(helicopterInstance, true);
             }
+
             activated = false;
         }
 
-        private bool CanSeePlayer(Player player)
-        {
-            if (player == null)
-            {
+        private bool CanSeePlayer(Player player) {
+            if (player == null) {
                 return false;
             }
 
             // less strict method, it should do like a cube, 2x2 big
-            if (!base.Scene.CollideCheck<Solid>(base.Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !base.Scene.CollideCheck<Solid>(base.Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX))
-            {
-                return (!base.Scene.CollideCheck<Solid>(base.Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !base.Scene.CollideCheck<Solid>(base.Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX));
-            }
-            return false;
+            return (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX))
+                && (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX));
         }
 
-        private void Shoot(Player player, float angle, float bulletSpeed)
-        {
+        private void Shoot(Player player, float angle, float bulletSpeed) {
             SceneAs<Level>().Add(Engine.Pooler.Create<TurretBullet>().Init(this, player, angle, bulletSpeed));
         }
 
-        private void SoundUpdate()
-        {
-            if (helicopterInstance != null)
-            {
-                Audio.Position(helicopterInstance, base.Center);
+        private void SoundUpdate() {
+            if (helicopterInstance != null) {
+                Audio.Position(helicopterInstance, Center);
             }
         }
 
-        public int IdleUpdate()
-        {
+        public int IdleUpdate() {
             SoundUpdate();
             Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
-            if (!activated)
-            {
-                if (countbool)
-                {
+            if (!activated) {
+                if (countbool) {
                     DelayTimer -= Engine.DeltaTime;
 
-                    if (DelayTimer <= 0f)
-                    {
+                    if (DelayTimer <= 0f) {
                         countbool = false;
                         countbool2 = true;
                         DelayTimer = 10f;
                         Audio.SetParameter(helicopterInstance, "Helicopter_Fade", 1f);
                         Audio.SetParameter(helicopterInstance, "Helicopter_Mute", 1f);
                     }
-                }
-                else if (countbool2)
-                {
+                } else if (countbool2) {
                     DelayTimer -= Engine.DeltaTime;
 
-                    if (DelayTimer <= 0f)
-                    {
+                    if (DelayTimer <= 0f) {
                         countbool2 = false;
                         activated = true;
-                        if (CanSeePlayer(player))
-                        {
+                        if (CanSeePlayer(player)) {
                             return 1;
                         }
                     }
                 }
+
                 return 0;
-            }
-            else if (CanSeePlayer(player))
-            {
+            } else if (CanSeePlayer(player)) {
 
                 return 1;
             }
+
             return 0;
         }
 
-        public int DelayUpdate()
-        {
+        public int DelayUpdate() {
             SoundUpdate();
             Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
-            if (player == null || !activated)
-            {
+            if (player == null || !activated) {
                 TurretSprite.Play("Idle");
                 return 0;
             }
-            if (DelayTimer >= 0f)
-            {
+
+            if (DelayTimer >= 0f) {
                 DelayTimer -= Engine.DeltaTime;
 
-                if (DelayTimer <= 0f)
-                {
+                if (DelayTimer <= 0f) {
 
                     return 2;
-                }
-                else if (DelayTimer <= aimTime/4 && !samplegot[3])
-                {
+                } else if (DelayTimer <= aimTime / 4 && !samplegot[3]) {
                     sample[3] = player.Center;
                     samplegot[3] = true;
 
-                }
-                else if (DelayTimer <= aimTime/2 && !samplegot[2])
-                {
+                } else if (DelayTimer <= aimTime / 2 && !samplegot[2]) {
                     sample[2] = player.Center;
                     samplegot[2] = true;
-                }
-                else if (DelayTimer <= 0.75*aimTime && !samplegot[1])
-                {
+                } else if (DelayTimer <= 0.75 * aimTime && !samplegot[1]) {
                     sample[1] = player.Center;
                     samplegot[1] = true;
 
-                }
-                else if (DelayTimer <= aimTime && !samplegot[0])
-                {
+                } else if (DelayTimer <= aimTime && !samplegot[0]) {
                     sample[0] = player.Center;
                     samplegot[0] = true;
                 }
             }
-            if (CanSeePlayer(player))
-            {
+
+            if (CanSeePlayer(player)) {
                 return 1;
             }
+
             TurretSprite.Play("Idle");
             return 0;
         }
 
-        public void DelayBegin()
-        {
+        public void DelayBegin() {
             TurretSprite.Play("Delay");
             DelayTimer = aimTime;
             int i = 0;
-            foreach (bool j in samplegot)
-            {
+            foreach (bool j in samplegot) {
                 samplegot[i] = false;
                 i++;
             }
         }
 
-        public int CooldownUpdate()
-        {
+        public int CooldownUpdate() {
             SoundUpdate();
-            if (!activated)
-            {
+            if (!activated) {
                 TurretSprite.Play("Idle");
                 return 0;
             }
-            if (DelayTimer >= 0f)
-            {
+
+            if (DelayTimer >= 0f) {
                 DelayTimer -= Engine.DeltaTime;
-                if (DelayTimer <= 0f)
-                {
+                if (DelayTimer <= 0f) {
                     TurretSprite.Play("Idle");
                     return 0;
                 }
             }
+
             return 2;
         }
-        public void CooldownBegin()
-        {
+        public void CooldownBegin() {
             TurretSprite.Play("Cooldown");
-            var rand = new Random(seed);
-            DelayTimer = cooldownTime * (1 + (float)(rand.NextDouble()) * randomDelay);
+            Random rand = new(seed);
+            DelayTimer = cooldownTime * (1 + ((float)rand.NextDouble() * randomDelay));
 
             //big fucking jank stupid PoS solution, apparently BiS??
             Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
@@ -335,17 +270,17 @@ namespace Celeste.Mod.HonlyHelper
             Vector2 accel1 = speed2 - speed1;
             Vector2 accel2 = speed3 - speed2;
             Vector2 accel3 = speed4 - speed3;
-            Vector2 accelavg = 0.4f * accel3 + 0.3f * accel2 + 0.3f * accel1;
-            Vector2 speed5 = speed4 + accelerationMultiplier * accelavg;
+            Vector2 accelavg = (0.4f * accel3) + (0.3f * accel2) + (0.3f * accel1);
+            Vector2 speed5 = speed4 + (accelerationMultiplier * accelavg);
 
-            float timetohit = (player.Center - base.Center).Length() / desiredBulletSpeed;
-            Vector2 playerExpect = player.Center + speed5 * (4/aimTime) * timetohit;
-            float bulletSpeed = (playerExpect - base.Center).Length() * (1 / timetohit);
+            float timetohit = (player.Center - Center).Length() / desiredBulletSpeed;
+            Vector2 playerExpect = player.Center + (speed5 * (4 / aimTime) * timetohit);
+            float bulletSpeed = (playerExpect - Center).Length() * (1 / timetohit);
 
-            angle = (playerExpect - base.Center).Angle();
+            angle = (playerExpect - Center).Angle();
             // also shoot or something
             Shoot(player, angle, bulletSpeed);
-            Audio.Play("event:/HonlyHelper/shot", base.Center);
+            Audio.Play("event:/HonlyHelper/shot", Center);
         }
     }
 }

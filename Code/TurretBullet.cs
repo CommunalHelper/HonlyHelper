@@ -8,7 +8,11 @@ namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/TurretBullet")]
     public class TurretBullet : Entity {
-        private readonly ParticleType particleType3 = new(FallingBlock.P_LandDust);
+        private const int tracerLength = 3;
+
+        private static readonly ParticleType collideParticle = new(FallingBlock.P_LandDust);
+
+        private readonly Sprite sprite;
         private Turret turret;
         private Level level;
         private Vector2 speed;
@@ -16,12 +20,10 @@ namespace Celeste.Mod.HonlyHelper {
         private Player target;
         private float aimAngle;
         private bool dead;
-        private bool DestinyBound = false;
-        private readonly Sprite sprite;
+        private bool destinyBound;
         private float bulletSpeed;
         private EventInstance whistleInstance;
         private Vector2 tempbetween;
-        private readonly int tracerlength = 3;
         private Vector2[] posbuffer;
 
         public TurretBullet()
@@ -39,23 +41,16 @@ namespace Celeste.Mod.HonlyHelper {
             this.target = target;
             this.aimAngle = aimAngle;
             this.bulletSpeed = bulletSpeed;
-            posbuffer = new Vector2[tracerlength];
+            posbuffer = new Vector2[tracerLength];
             dead = false;
-            DestinyBound = false;
+            destinyBound = false;
 
-            for (int i = 0; i < tracerlength; i++) {
+            for (int i = 0; i < tracerLength; i++) {
                 posbuffer[i] = turret.Center;
             }
 
             InitSpeed();
             return this;
-        }
-
-        private void InitSpeed() {
-            speed = target != null ? Vector2.UnitX * bulletSpeed : Vector2.UnitX * bulletSpeed;
-            if (aimAngle != 0f) {
-                speed = speed.Rotate(aimAngle);
-            }
         }
 
         public override void Added(Scene scene) {
@@ -67,14 +62,9 @@ namespace Celeste.Mod.HonlyHelper {
             whistleInstance = Audio.Play("event:/HonlyHelper/bullet_whistle", Center);
         }
 
-        public override void Removed(Scene scene) {
-            base.Removed(scene);
-            level = null;
-        }
-
         public override void Update() {
             base.Update();
-            if (DestinyBound) {
+            if (destinyBound) {
                 Destroy();
             }
 
@@ -96,7 +86,7 @@ namespace Celeste.Mod.HonlyHelper {
 
                 OnPlayer(target);
                 Position = turret.Center;
-                DestinyBound = true;
+                destinyBound = true;
                 UpdateRenderBuffer(true);
             } else if (Scene.CollideCheck<Solid>(anchor, Position)) {
                 Vector2 tempanchor = anchor;
@@ -113,7 +103,7 @@ namespace Celeste.Mod.HonlyHelper {
                     tempbetween = (tempanchor + tempposition) / 2;
                 }
 
-                level.Particles.Emit(particleType3, 4, tempbetween, Vector2.One * 1f, (-speed).Angle());
+                level.Particles.Emit(collideParticle, 4, tempbetween, Vector2.One * 1f, (-speed).Angle());
                 Audio.Play("event:/game/04_cliffside/snowball_impact", tempbetween);
 
                 FallingBlock fallingBlock = CollideFirst<FallingBlock>(tempbetween);
@@ -126,12 +116,12 @@ namespace Celeste.Mod.HonlyHelper {
                     dashBlock.Break(tempbetween, speed, true, true);
                 }
 
-                DestinyBound = true;
+                destinyBound = true;
                 Position = turret.Center;
                 UpdateRenderBuffer(true);
             } else {
                 //makes sure bullets aren't suicidal
-                DestinyBound = false;
+                destinyBound = false;
 
                 UpdateRenderBuffer(false);
                 Position = anchor;
@@ -146,24 +136,36 @@ namespace Celeste.Mod.HonlyHelper {
             Audio.Position(whistleInstance, Position);
         }
 
-        private void UpdateRenderBuffer(bool collisionDetected) {
-            for (int i = tracerlength - 1; i > 0; i--) {
-                posbuffer[i] = posbuffer[i - 1];
-            }
-
-            posbuffer[0] = collisionDetected ? tempbetween : anchor;
-        }
-
         public override void Render() {
-            for (int i = 0; i < tracerlength - 1; i++) {
+            for (int i = 0; i < tracerLength - 1; i++) {
                 Draw.Line(posbuffer[i], posbuffer[i + 1], Color.White);
             }
 
             base.Render();
         }
 
-        public void Destroy() {
-            DestinyBound = false;
+        public override void Removed(Scene scene) {
+            base.Removed(scene);
+            level = null;
+        }
+
+        private void InitSpeed() {
+            speed = target != null ? Vector2.UnitX * bulletSpeed : Vector2.UnitX * bulletSpeed;
+            if (aimAngle != 0f) {
+                speed = speed.Rotate(aimAngle);
+            }
+        }
+
+        private void UpdateRenderBuffer(bool collisionDetected) {
+            for (int i = tracerLength - 1; i > 0; i--) {
+                posbuffer[i] = posbuffer[i - 1];
+            }
+
+            posbuffer[0] = collisionDetected ? tempbetween : anchor;
+        }
+
+        private void Destroy() {
+            destinyBound = false;
             Audio.Stop(whistleInstance, false);
             dead = true;
             RemoveSelf();

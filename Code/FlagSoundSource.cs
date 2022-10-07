@@ -8,9 +8,9 @@ namespace Celeste.Mod.HonlyHelper {
     public class FlagSoundSourceEntity : Entity {
         private readonly string eventName;
         private readonly string flagName;
-        private bool playing = false;
         private readonly bool fademode;
         private readonly SoundSource sfx;
+        private bool playing = false;
 
         public FlagSoundSourceEntity(EntityData data, Vector2 offset)
             : base(data.Position + offset) {
@@ -23,20 +23,20 @@ namespace Celeste.Mod.HonlyHelper {
             Depth = -8500;
         }
 
+        public override void Added(Scene scene) {
+            base.Added(scene);
+            if (SceneAs<Level>().Session.GetFlag(flagName)) {
+                sfx.Play(eventName);
+                playing = true;
+            }
+        }
+
         public override void Update() {
             base.Update();
             if (!SceneAs<Level>().Session.GetFlag(flagName) && playing) {
                 sfx.Stop(fademode);
                 playing = false;
             } else if (SceneAs<Level>().Session.GetFlag(flagName) && !playing) {
-                sfx.Play(eventName);
-                playing = true;
-            }
-        }
-
-        public override void Added(Scene scene) {
-            base.Added(scene);
-            if (SceneAs<Level>().Session.GetFlag(flagName)) {
                 sfx.Play(eventName);
                 playing = true;
             }

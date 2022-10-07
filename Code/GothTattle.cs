@@ -12,15 +12,11 @@ namespace Celeste.Mod.HonlyHelper {
         private readonly bool Loops; //if loops == true, will rotate through entire set of dialog IDs, looping when reaching the end. otherwise only repeats final dialog
 
         private Coroutine TattleCoroutine;
-
         private Level level;
-
         private bool BadelineOnTheField;
         private bool Tattling;
-
         private BadelineDummy badeline;
         private int inventoryBackup;
-
         private int dialogCounter;
 
         public GothTattle(EntityData data, Vector2 offset)
@@ -28,7 +24,6 @@ namespace Celeste.Mod.HonlyHelper {
             GothDialogID = data.Attr("GothDialogID");
             DialogAmount = data.Int("DialogAmount");
             Loops = data.Bool("Loops");
-
         }
 
         public override void Added(Scene scene) {
@@ -41,7 +36,6 @@ namespace Celeste.Mod.HonlyHelper {
 
         public override void OnStay(Player player) {
             base.OnStay(player);
-
             if (HonlyHelperModule.Settings.TalkToBadeline.Pressed && !Tattling) {
                 HonlyHelperModule.Settings.TalkToBadeline.ConsumePress();
                 Tattling = true;
@@ -84,7 +78,6 @@ namespace Celeste.Mod.HonlyHelper {
             yield return level.ZoomBack(0.75f);
             level.EndCutscene();
             OnTattleEnd(level);
-
         }
 
         private void OnTattleEnd(Level level) {

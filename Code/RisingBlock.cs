@@ -10,19 +10,31 @@ namespace Celeste.Mod.HonlyHelper {
     [TrackedAs(typeof(FallingBlock))]
     [CustomEntity("HonlyHelper/RisingBlock")]
     public class RisingBlock : FallingBlock {
-        internal static void Load() {
-            On.Celeste.FallingBlock.Sequence += FallingBlock_Sequence;
-        }
-        internal static void Unload() {
-            On.Celeste.FallingBlock.Sequence -= FallingBlock_Sequence;
-        }
-
         private static readonly MethodInfo FallingPlayerFallCheck = typeof(FallingBlock).GetMethod("PlayerFallCheck", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo FallingShakeSfx = typeof(FallingBlock).GetMethod("ShakeSfx", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo FallingHighlightFade = typeof(FallingBlock).GetMethod("HighlightFade", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo FallingPlayerWaitCheck = typeof(FallingBlock).GetMethod("PlayerWaitCheck", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo FallingImpactSfx = typeof(FallingBlock).GetMethod("ImpactSfx", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo FallingLandParticles = typeof(FallingBlock).GetMethod("LandParticles", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private readonly DynamicData baseData;
+
+        public RisingBlock(Vector2 position, char tile, int width, int height, bool finalBoss, bool behind, bool climbFall)
+            : base(position, tile, width, height, finalBoss, behind, climbFall) {
+            baseData = new DynamicData(typeof(FallingBlock), this);
+        }
+
+        public RisingBlock(EntityData data, Vector2 offset)
+            : this(data.Position + offset, data.Char("tiletype", '3'), data.Width, data.Height, finalBoss: false, data.Bool("behind"), data.Bool("climbFall", defaultValue: true)) {
+        }
+
+        internal static void Load() {
+            On.Celeste.FallingBlock.Sequence += FallingBlock_Sequence;
+        }
+
+        internal static void Unload() {
+            On.Celeste.FallingBlock.Sequence -= FallingBlock_Sequence;
+        }
 
         private static IEnumerator FallingBlock_Sequence(On.Celeste.FallingBlock.orig_Sequence orig, FallingBlock self) {
             if (self is RisingBlock block) {
@@ -118,17 +130,6 @@ namespace Celeste.Mod.HonlyHelper {
                     yield return origEnum.Current;
                 }
             }
-        }
-
-        public DynamicData baseData;
-
-        public RisingBlock(Vector2 position, char tile, int width, int height, bool finalBoss, bool behind, bool climbFall)
-            : base(position, tile, width, height, finalBoss, behind, climbFall) {
-            baseData = new DynamicData(typeof(FallingBlock), this);
-        }
-
-        public RisingBlock(EntityData data, Vector2 offset)
-            : this(data.Position + offset, data.Char("tiletype", '3'), data.Width, data.Height, finalBoss: false, data.Bool("behind"), data.Bool("climbFall", defaultValue: true)) {
         }
     }
 }

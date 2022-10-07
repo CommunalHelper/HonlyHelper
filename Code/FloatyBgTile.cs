@@ -7,40 +7,27 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace Celeste.Mod.HonlyHelper {
-    [CustomEntity("HonlyHelper/FloatyBgTile")]
     [Tracked]
+    [CustomEntity("HonlyHelper/FloatyBgTile")]
     public class FloatyBgTile : Entity {
-        internal static void Load() {
-            On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren += AddToGroupAndFindChildrenAddendum;
-            On.Celeste.FloatySpaceBlock.Awake += AwakeAddendum;
-            On.Celeste.FloatySpaceBlock.MoveToTarget += MoveToTargetAddendum;
+        private static readonly MethodInfo FloatyAddToGroupAndFindChildren = typeof(FloatySpaceBlock).GetMethod("AddToGroupAndFindChildren", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        }
-        internal static void Unload() {
-            On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren -= AddToGroupAndFindChildrenAddendum;
-            On.Celeste.FloatySpaceBlock.Awake -= AwakeAddendum;
-            On.Celeste.FloatySpaceBlock.MoveToTarget -= MoveToTargetAddendum;
-        }
+        public List<FloatyBgTile> Group;
+        public List<FloatySpaceBlock> Floaties;
+        public Dictionary<Entity, Vector2> Moves;
+        public Point GroupBoundsMin;
+        public Point GroupBoundsMax;
 
-        private TileGrid tiles;
         private readonly char tileType;
+        private TileGrid tiles;
         private float yLerp;
         private float sinkTimer;
         private float sineWave;
         private float dashEase;
         private FloatyBgTile master;
         private bool awake;
-        public List<FloatyBgTile> Group;
-        public List<FloatySpaceBlock> Floaties;
-        public Dictionary<Entity, Vector2> Moves;
-        public Point GroupBoundsMin;
-        public Point GroupBoundsMax;
         private bool HookedToFg;
         private FloatySpaceBlock HookedFg;
-
-        public bool HasGroup { get; private set; }
-
-        public bool MasterOfGroup { get; private set; }
 
         public FloatyBgTile(Vector2 position, float width, float height, char tileType, bool disableSpawnOffset)
             : base(position) {
@@ -52,11 +39,12 @@ namespace Celeste.Mod.HonlyHelper {
             HookedToFg = false;
         }
 
-        private static readonly MethodInfo FloatyAddToGroupAndFindChildren = typeof(FloatySpaceBlock).GetMethod("AddToGroupAndFindChildren", BindingFlags.Instance | BindingFlags.NonPublic);
-
         public FloatyBgTile(EntityData data, Vector2 offset)
             : this(data.Position + offset, data.Width, data.Height, data.Char("tiletype", '3'), data.Bool("disableSpawnOffset")) {
         }
+
+        public bool HasGroup { get; private set; }
+        public bool MasterOfGroup { get; private set; }
 
         public override void Awake(Scene scene) {
             base.Awake(scene);
@@ -96,63 +84,6 @@ namespace Celeste.Mod.HonlyHelper {
             TryToInitPosition();
         }
 
-        public override void Removed(Scene scene) {
-            tiles = null;
-            Moves = null;
-            Group = null;
-            base.Removed(scene);
-        }
-
-        private void TryToInitPosition() {
-            if (MasterOfGroup) {
-                foreach (FloatyBgTile item in Group) {
-                    if (!item.awake) {
-                        return;
-                    }
-                }
-
-                MoveToTarget();
-            } else {
-                master.TryToInitPosition();
-            }
-        }
-
-        private void AddToGroupAndFindChildren(FloatyBgTile from) {
-            if (from.X < GroupBoundsMin.X) {
-                GroupBoundsMin.X = (int)from.X;
-            }
-
-            if (from.Y < GroupBoundsMin.Y) {
-                GroupBoundsMin.Y = (int)from.Y;
-            }
-
-            if (from.Right > GroupBoundsMax.X) {
-                GroupBoundsMax.X = (int)from.Right;
-            }
-
-            if (from.Bottom > GroupBoundsMax.Y) {
-                GroupBoundsMax.Y = (int)from.Bottom;
-            }
-
-            from.HasGroup = true;
-            Group.Add(from);
-            Moves.Add(from, from.Position);
-            if (from != this) {
-                from.master = this;
-            }
-
-            foreach (FloatyBgTile entity in Scene.Tracker.GetEntities<FloatyBgTile>()) {
-                if (!entity.HasGroup && (Scene.CollideCheck(new Rectangle((int)from.X - 1, (int)from.Y, (int)from.Width + 2, (int)from.Height), entity) || Scene.CollideCheck(new Rectangle((int)from.X, (int)from.Y - 1, (int)from.Width, (int)from.Height + 2), entity))) {
-                    if (from.HookedToFg) {
-                        entity.HookedToFg = true;
-                        entity.HookedFg = from.HookedFg;
-                    }
-
-                    AddToGroupAndFindChildren(entity);
-                }
-            }
-        }
-
         public override void Update() {
             base.Update();
 
@@ -168,35 +99,23 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
-        private void MoveToTarget() {
-            float num = (float)Math.Sin(sineWave) * 4f;
-            Vector2 vector = Vector2.Zero;
-
-            for (int i = 0; i < 2; i++) {
-                foreach (KeyValuePair<Entity, Vector2> move in Moves) {
-                    Entity key = move.Key;
-                    Vector2 value = move.Value;
-                    if (!HookedToFg) {
-                        float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(yLerp)) + num;
-                        key.Position.Y = num2;
-                        key.Position.X = value.X;
-                    }
-                }
-            }
+        public override void Removed(Scene scene) {
+            tiles = null;
+            Moves = null;
+            Group = null;
+            base.Removed(scene);
         }
 
-        public void MoveToTargetAttached(float num, Vector2 vector, float ylerp) {
-            for (int i = 0; i < 2; i++) {
-                foreach (KeyValuePair<Entity, Vector2> move in Moves) {
-                    Entity key = move.Key;
-                    Vector2 value = move.Value;
+        internal static void Load() {
+            On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren += AddToGroupAndFindChildrenAddendum;
+            On.Celeste.FloatySpaceBlock.Awake += AwakeAddendum;
+            On.Celeste.FloatySpaceBlock.MoveToTarget += MoveToTargetAddendum;
 
-                    float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(ylerp)) + num;
-                    key.Position.Y = num2 + vector.Y;
-                    key.Position.X = value.X + vector.X;
-
-                }
-            }
+        }
+        internal static void Unload() {
+            On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren -= AddToGroupAndFindChildrenAddendum;
+            On.Celeste.FloatySpaceBlock.Awake -= AwakeAddendum;
+            On.Celeste.FloatySpaceBlock.MoveToTarget -= MoveToTargetAddendum;
         }
 
         private static void AddToGroupAndFindChildrenAddendum(On.Celeste.FloatySpaceBlock.orig_AddToGroupAndFindChildren orig, FloatySpaceBlock self, FloatySpaceBlock from) {
@@ -254,6 +173,87 @@ namespace Celeste.Mod.HonlyHelper {
                     if (entity.MasterOfGroup) {
                         entity.MoveToTargetAttached(num, vector, ylerpFloaty);
                     }
+                }
+            }
+        }
+
+        private void TryToInitPosition() {
+            if (MasterOfGroup) {
+                foreach (FloatyBgTile item in Group) {
+                    if (!item.awake) {
+                        return;
+                    }
+                }
+
+                MoveToTarget();
+            } else {
+                master.TryToInitPosition();
+            }
+        }
+
+        private void AddToGroupAndFindChildren(FloatyBgTile from) {
+            if (from.X < GroupBoundsMin.X) {
+                GroupBoundsMin.X = (int)from.X;
+            }
+
+            if (from.Y < GroupBoundsMin.Y) {
+                GroupBoundsMin.Y = (int)from.Y;
+            }
+
+            if (from.Right > GroupBoundsMax.X) {
+                GroupBoundsMax.X = (int)from.Right;
+            }
+
+            if (from.Bottom > GroupBoundsMax.Y) {
+                GroupBoundsMax.Y = (int)from.Bottom;
+            }
+
+            from.HasGroup = true;
+            Group.Add(from);
+            Moves.Add(from, from.Position);
+            if (from != this) {
+                from.master = this;
+            }
+
+            foreach (FloatyBgTile entity in Scene.Tracker.GetEntities<FloatyBgTile>()) {
+                if (!entity.HasGroup && (Scene.CollideCheck(new Rectangle((int)from.X - 1, (int)from.Y, (int)from.Width + 2, (int)from.Height), entity) || Scene.CollideCheck(new Rectangle((int)from.X, (int)from.Y - 1, (int)from.Width, (int)from.Height + 2), entity))) {
+                    if (from.HookedToFg) {
+                        entity.HookedToFg = true;
+                        entity.HookedFg = from.HookedFg;
+                    }
+
+                    AddToGroupAndFindChildren(entity);
+                }
+            }
+        }
+
+        private void MoveToTarget() {
+            float num = (float)Math.Sin(sineWave) * 4f;
+            Vector2 vector = Vector2.Zero;
+
+            for (int i = 0; i < 2; i++) {
+                foreach (KeyValuePair<Entity, Vector2> move in Moves) {
+                    Entity key = move.Key;
+                    Vector2 value = move.Value;
+                    if (!HookedToFg) {
+                        float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(yLerp)) + num;
+                        key.Position.Y = num2;
+                        key.Position.X = value.X;
+                    }
+                }
+            }
+        }
+
+        private void MoveToTargetAttached(float num, Vector2 vector, float ylerp) {
+            for (int i = 0; i < 2; i++) {
+                foreach (KeyValuePair<Entity, Vector2> move in Moves) {
+                    Entity key = move.Key;
+                    Vector2 value = move.Value;
+
+                    float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(ylerp)) + num;
+                    key.Position.Y = num2 + vector.Y;
+                    key.Position.X = value.X + vector.X;
+
                 }
             }
         }

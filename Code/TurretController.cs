@@ -7,10 +7,11 @@ namespace Celeste.Mod.HonlyHelper {
     [CustomEntity("HonlyHelper/TurretController")]
     public class TurretController : Trigger {
         private readonly string turretID;
-        private Turret turret;
         private readonly string turretActionRead;
+        private Turret turret;
 
-        public TurretController(EntityData data, Vector2 offset) : base(data, offset) {
+        public TurretController(EntityData data, Vector2 offset)
+            : base(data, offset) {
             turretID = data.Attr("turretID");
             turretActionRead = data.Attr("turretAction");
         }
@@ -19,8 +20,9 @@ namespace Celeste.Mod.HonlyHelper {
             base.Added(scene);
 
             foreach (Turret t in SceneAs<Level>().Tracker.GetEntities<Turret>()) {
-                if (t.turretID == turretID) {
+                if (t.TurretID == turretID) {
                     turret = t;
+                    break;
                 }
             }
         }

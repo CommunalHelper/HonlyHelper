@@ -5,14 +5,12 @@ using System.Collections.Generic;
 namespace Celeste.Mod.HonlyHelper {
     [Tracked(true)]
     public class Creechure : Entity {
-        protected Vector2 speed;
-        protected Vector2 movementGoal;
-
-        protected float friendSearchRadius = 56f;
         public List<Creechure> friendJar;
         public bool hasFriends = false;
 
-        protected bool Solid;
+        protected Vector2 speed;
+        protected Vector2 movementGoal;
+        protected float friendSearchRadius = 56f;
 
         public Creechure(Vector2 position)
             : base(position) {
@@ -23,7 +21,7 @@ namespace Celeste.Mod.HonlyHelper {
             base.Update();
         }
 
-        public List<Creechure> FindFriends<T>(Scene scene) where T : Creechure {
+        protected List<Creechure> FindFriends<T>(Scene scene) where T : Creechure {
             hasFriends = true;
             List<Creechure> friendsList = new();
             foreach (T friend in scene.Tracker.GetWithinRadius<T>(Position, friendSearchRadius)) {

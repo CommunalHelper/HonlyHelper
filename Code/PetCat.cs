@@ -6,12 +6,12 @@ using System.Collections;
 namespace Celeste.Mod.HonlyHelper {
     [CustomEntity("HonlyHelper/PettableCat")]
     public class PettableCat : NPC {
-        private Coroutine pettingRoutine;
         private readonly Sprite CatSprite;
-        private Vector2 CatAnchor;
         private readonly Sprite ThePetterSprite;
-        private bool PettingInProgress = false;
         private readonly string catFlag;
+        private Coroutine pettingRoutine;
+        private Vector2 CatAnchor;
+        private bool PettingInProgress = false;
         private Vector2 friendposition;
 
         public PettableCat(Vector2 position, string CatFlag)

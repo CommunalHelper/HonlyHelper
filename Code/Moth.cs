@@ -26,7 +26,7 @@ namespace Celeste.Mod.HonlyHelper {
         }
 
         public override void Update() {
-            FlightGoal = lamp != null ? lamp.Entity.Position + lamp.Position : Position - (newspeed * Engine.DeltaTime * 20f);
+            FlightGoal = lamp != null ? lamp.Entity.Position + lamp.Position : Position - (NewSpeed * Engine.DeltaTime * 20f);
             base.Update();
         }
 

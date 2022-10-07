@@ -14,43 +14,18 @@ namespace Celeste.Mod.HonlyHelper {
         "HonlyHelper/BouncySpikesRight = BounceRight"
     )]
     public class BouncySpikes : Entity {
-        public static Entity BounceUp(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
-            return new BouncySpikes(entityData, position, Directions.Up);
-        }
-
-        public static Entity BounceDown(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
-            return new BouncySpikes(entityData, position, Directions.Down);
-        }
-
-        public static Entity BounceLeft(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
-            return new BouncySpikes(entityData, position, Directions.Left);
-        }
-
-        public static Entity BounceRight(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
-            return new BouncySpikes(entityData, position, Directions.Right);
-        }
-
-        public enum Directions {
-            Up,
-            Down,
-            Left,
-            Right
-        }
+        private static readonly ParticleType bounceParticle = new(Player.P_DashA);
 
         public Directions Direction;
 
-        private Vector2 speed;
-
         private readonly string texture;
-        private Image image;
-
         private readonly int size;
+        private readonly float particleAngle;
+        private readonly bool FreezeFrameEnable = false;
+            
         private bool dashedintoit;
         private bool intoit;
-        private readonly bool FreezeFrameEnable = false;
-
-        private readonly ParticleType bounceParticle = new(Player.P_DashA);
-        private readonly float particleAngle;
+        private Vector2 speed;
         private Vector2 particlePosAdjust;
         private Vector2 particlePosAdjustTwo;
 
@@ -76,37 +51,26 @@ namespace Celeste.Mod.HonlyHelper {
                     particleAngle = (float)(11 * Math.PI / 8);
                     particlePosAdjust = Vector2.Zero;
                     particlePosAdjustTwo = -Vector2.UnitX;
+                    Collider = new Hitbox(size, 8f, 0f, -8f);
+                    Add(new LedgeBlocker());
                     break;
                 case Directions.Down:
                     particleAngle = (float)(3 * Math.PI / 8);
                     particlePosAdjust = new Vector2(0, -10);
                     particlePosAdjustTwo = Vector2.UnitX;
+                    Collider = new Hitbox(size, 8f);
                     break;
                 case Directions.Left:
                     particleAngle = (float)(7 * Math.PI / 8);
                     particlePosAdjust = new Vector2(5, -8);
                     particlePosAdjustTwo = Vector2.UnitY;
+                    Collider = new Hitbox(8f, size, -8f);
+                    Add(new LedgeBlocker());
                     break;
                 case Directions.Right:
                     particleAngle = (float)(15 * Math.PI / 8);
                     particlePosAdjust = new Vector2(-4, -8);
                     particlePosAdjustTwo = -Vector2.UnitY;
-                    break;
-            }
-
-            switch (direction) {
-                case Directions.Up:
-                    Collider = new Hitbox(size, 8f, 0f, -8f);
-                    Add(new LedgeBlocker());
-                    break;
-                case Directions.Down:
-                    Collider = new Hitbox(size, 8f);
-                    break;
-                case Directions.Left:
-                    Collider = new Hitbox(8f, size, -8f);
-                    Add(new LedgeBlocker());
-                    break;
-                case Directions.Right:
                     Collider = new Hitbox(8f, size);
                     Add(new LedgeBlocker());
                     break;
@@ -125,14 +89,34 @@ namespace Celeste.Mod.HonlyHelper {
             : this(data.Position + offset, GetSize(data, dir), dir, data.Attr("texture", "objects/HonlyHelper/BouncySpikes/bouncer"), data.Bool("FreezeFrameEnable")) {
         }
 
+        public enum Directions {
+            Up,
+            Down,
+            Left,
+            Right
+        }
+
+        public static Entity BounceUp(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
+            return new BouncySpikes(entityData, position, Directions.Up);
+        }
+
+        public static Entity BounceDown(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
+            return new BouncySpikes(entityData, position, Directions.Down);
+        }
+
+        public static Entity BounceLeft(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
+            return new BouncySpikes(entityData, position, Directions.Left);
+        }
+
+        public static Entity BounceRight(Level level, LevelData levelData, Vector2 position, EntityData entityData) {
+            return new BouncySpikes(entityData, position, Directions.Right);
+        }
+
         public override void Added(Scene scene) {
             base.Added(scene);
-
-            string str = Direction.ToString().ToLower();
-
-            List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures(texture + "_" + str);
+            List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures(texture + "_" + Direction.ToString().ToLower());
             for (int j = 0; j < size / 8; j++) {
-                image = new(Calc.Random.Choose(atlasSubtextures));
+                Image image = new(Calc.Random.Choose(atlasSubtextures));
                 switch (Direction) {
                     case Directions.Up:
                         image.JustifyOrigin(0.5f, 1f);
@@ -156,12 +140,47 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
+        public override void Update() {
+            base.Update();
+            Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
+            if (player != null) {
+                if (intoit) {
+                    if (player.Speed.Length() < speed.Length() - 10) {
+                        player.Speed = speed;
+                    }
+
+                    if (!CollideCheck<Player>()) {
+                        if (dashedintoit) {
+                            player.StateMachine.State = Player.StNormal;
+                            dashedintoit = false;
+                        }
+
+                        if (!player.Inventory.NoRefills) {
+                            player.RefillDash();
+                        }
+
+                        player.RefillStamina();
+                        intoit = false;
+                    }
+                }
+
+            }
+        }
+
+        private static int GetSize(EntityData data, Directions dir) {
+            return dir == Directions.Left || dir == Directions.Right ? data.Height : data.Width;
+        }
+
         private void OnShake(Vector2 amount) {
-            image.Position += amount;
+            foreach (Component component in Components) {
+                if (component is Image image) {
+                    image.Position += amount;
+                }
+            }            
         }
 
         private void OnCollide(Player player) {
-            // Pretty sure this is unintentionally bugged due to short-circuiting, but the climb check could break existing maps if changed now?
+            // Pretty sure this is unintentionally bugged due to short-circuiting, but the climb check could break existing maps if changed now? - Kahuna
             if (!(player.StateMachine.State == Player.StCassetteFly || player.StateMachine.State == Player.StBirdDashTutorial || player.StateMachine.State == Player.StClimb)) {
                 switch (Direction) {
                     case Directions.Up:
@@ -302,37 +321,6 @@ namespace Celeste.Mod.HonlyHelper {
                         break;
                 }
             }
-        }
-
-        public override void Update() {
-            base.Update();
-            Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
-            if (player != null) {
-                if (intoit) {
-                    if (player.Speed.Length() < speed.Length() - 10) {
-                        player.Speed = speed;
-                    }
-
-                    if (!CollideCheck<Player>()) {
-                        if (dashedintoit) {
-                            player.StateMachine.State = Player.StNormal;
-                            dashedintoit = false;
-                        }
-
-                        if (!player.Inventory.NoRefills) {
-                            player.RefillDash();
-                        }
-
-                        player.RefillStamina();
-                        intoit = false;
-                    }
-                }
-
-            }
-        }
-
-        private static int GetSize(EntityData data, Directions dir) {
-            return dir == Directions.Left || dir == Directions.Right ? data.Height : data.Width;
         }
 
         private void OnCertifiedHit(Vector2 hitposition, Player player) {

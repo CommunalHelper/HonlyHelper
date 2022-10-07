@@ -1,29 +1,25 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.HonlyHelper {
-    [CustomEntity("HonlyHelper/CameraTargetCrossfadeTrigger")]
     [Tracked]
+    [CustomEntity("HonlyHelper/CameraTargetCrossfadeTrigger")]
     public class CameraTargetCrossfadeTrigger : Trigger {
         public Vector2 TargetA;
         public Vector2 TargetB;
-
         public float LerpStrengthA;
         public float LerpStrengthB;
-
         public PositionModes PositionMode;
-
         public bool XOnly;
-
         public bool YOnly;
-
         public string DeleteFlag;
 
+        private readonly float LerpAToB;
         private Vector2 AToB;
         private float LerpPos;
-        private readonly float LerpAToB;
 
         public CameraTargetCrossfadeTrigger(EntityData data, Vector2 offset)
             : base(data, offset) {
@@ -53,23 +49,16 @@ namespace Celeste.Mod.HonlyHelper {
 
         public override void OnLeave(Player player) {
             base.OnLeave(player);
-            bool flag = false;
-            List<Entity> triggerList = new();
+            bool playerInAnchor = false;
 
-            triggerList.AddRange(Scene.Tracker.GetEntities<CameraAdvanceTargetTrigger>());
-            triggerList.AddRange(Scene.Tracker.GetEntities<CameraTargetTrigger>());
-            triggerList.AddRange(Scene.Tracker.GetEntities<CameraTargetCrossfadeTrigger>());
-            triggerList.AddRange(Scene.Tracker.GetEntities<CameraTargetCornerTrigger>());
-
-            foreach (Trigger trigger in triggerList) {
-                if (trigger.PlayerIsInside) {
-
-                    flag = true;
+            foreach (Trigger trigger in DynamicData.For(player).Get<HashSet<Trigger>>("triggersInside")) {
+                if (trigger is CameraTargetTrigger or CameraAdvanceTargetTrigger or CameraTargetCornerTrigger or CameraTargetCrossfadeTrigger) {
+                    playerInAnchor = true;
                     break;
                 }
             }
 
-            if (!flag) {
+            if (!playerInAnchor) {
                 player.CameraAnchorIgnoreX = false;
                 player.CameraAnchorIgnoreY = false;
                 player.CameraAnchorLerp = Vector2.Zero;

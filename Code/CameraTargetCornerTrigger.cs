@@ -1,29 +1,19 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 using System;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.HonlyHelper {
-    [CustomEntity("HonlyHelper/CameraTargetCornerTrigger")]
     [Tracked]
+    [CustomEntity("HonlyHelper/CameraTargetCornerTrigger")]
     public class CameraTargetCornerTrigger : Trigger {
-        public enum PositionModeCorners {
-            BottomLeft,
-            BottomRight,
-            TopLeft,
-            TopRight
-        }
-
         public Vector2 Target;
-
         public float LerpStrength;
-
         public PositionModeCorners PositionMode;
-
         public bool XOnly;
-
         public bool YOnly;
-
         public string DeleteFlag;
 
         private readonly int ModX;
@@ -41,8 +31,6 @@ namespace Celeste.Mod.HonlyHelper {
             ModX = ModY = 0;
 
             switch (PositionMode) {
-                case PositionModeCorners.BottomLeft:
-                    break;
                 case PositionModeCorners.BottomRight:
                     ModX = 1;
                     break;
@@ -52,7 +40,16 @@ namespace Celeste.Mod.HonlyHelper {
                 case PositionModeCorners.TopRight:
                     ModX = ModY = 1;
                     break;
+                default:
+                    break;
             }
+        }
+
+        public enum PositionModeCorners {
+            BottomLeft,
+            BottomRight,
+            TopLeft,
+            TopRight
         }
 
         public override void OnStay(Player player) {
@@ -67,35 +64,18 @@ namespace Celeste.Mod.HonlyHelper {
 
         public override void OnLeave(Player player) {
             base.OnLeave(player);
-            bool flag = false;
-            foreach (CameraTargetTrigger entity in Scene.Tracker.GetEntities<CameraTargetTrigger>()) {
-                if (entity.PlayerIsInside) {
-                    flag = true;
+            bool playerInAnchor = false;
+
+            foreach (Trigger trigger in DynamicData.For(player).Get<HashSet<Trigger>>("triggersInside")) {
+                if (trigger is CameraTargetTrigger or CameraAdvanceTargetTrigger or CameraTargetCornerTrigger or CameraTargetCrossfadeTrigger) {
+                    playerInAnchor = true;
                     break;
                 }
             }
 
-            if (!flag) {
-                foreach (CameraAdvanceTargetTrigger entity2 in Scene.Tracker.GetEntities<CameraAdvanceTargetTrigger>()) {
-                    if (entity2.PlayerIsInside) {
-                        flag = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!flag) {
-                foreach (CameraTargetCornerTrigger entity3 in Scene.Tracker.GetEntities<CameraTargetCornerTrigger>()) {
-                    if (entity3.PlayerIsInside) {
-                        flag = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!flag) {
-                player.CameraAnchorIgnoreX = YOnly;
-                player.CameraAnchorIgnoreY = XOnly;
+            if (!playerInAnchor) {
+                player.CameraAnchorIgnoreX = false;
+                player.CameraAnchorIgnoreY = false;
                 player.CameraAnchorLerp = Vector2.Zero;
             }
         }

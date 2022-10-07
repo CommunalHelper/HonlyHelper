@@ -8,49 +8,46 @@ namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/Turret")]
     public class Turret : Entity {
+        private const int StIdle = 0;
+        private const int StDelay = 1;
+        private const int StCooldown = 2;
+
         public StateMachine StateMachine;
+        public string TurretID;
+        public float DelayTimer;
+        public float Angle;
 
         private readonly Sprite TurretSprite;
-
-        public float DelayTimer;
-
-        public float angle;
-
         private readonly Vector2[] sample = new Vector2[5];
         private readonly bool[] samplegot = { false, false, false, false };
-
         private readonly float desiredBulletSpeed;
         private readonly float randomDelay;
         private readonly float cooldownTime;
         private readonly float aimTime;
         private readonly float accelerationMultiplier;
-
+        private readonly int seed;
+        private EventInstance helicopterInstance;
         private bool activated;
         private bool countbool;
         private bool countbool2;
-        public string turretID;
 
-        private readonly int seed;
-
-        private EventInstance helicopterInstance;
-
-        public Turret(Vector2 position, float desiredBulletSpeed, float randomDelay, string turretID, float cooldownTime, float aimTime, float accelerationMultipler)
+        public Turret(Vector2 position, float desiredBulletSpeed, float randomDelay, string turretID, float cooldownTime, float aimTime, float accelerationMultiplier)
             : base(position) {
             StateMachine = new StateMachine(3);
             StateMachine.SetCallbacks(0, IdleUpdate);
             StateMachine.SetCallbacks(1, DelayUpdate, null, DelayBegin);
             StateMachine.SetCallbacks(2, CooldownUpdate, null, CooldownBegin);
             Add(StateMachine);
-            StateMachine.State = 0;
+            StateMachine.State = StIdle;
             activated = false;
             countbool = false;
 
+            TurretID = turretID;
             this.cooldownTime = cooldownTime;
             this.aimTime = aimTime;
-            this.turretID = turretID;
             this.desiredBulletSpeed = desiredBulletSpeed;
             this.randomDelay = randomDelay;
-            accelerationMultiplier = accelerationMultipler;
+            this.accelerationMultiplier = accelerationMultiplier;
 
             // sprites n stuff later or maybe not
             TurretSprite = new Sprite(GFX.Game, "objects/HonlyHelper/Turret/");
@@ -133,33 +130,12 @@ namespace Celeste.Mod.HonlyHelper {
             activated = false;
         }
 
-        private bool CanSeePlayer(Player player) {
-            if (player == null) {
-                return false;
-            }
-
-            // less strict method, it should do like a cube, 2x2 big
-            return (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX))
-                && (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX));
-        }
-
-        private void Shoot(Player player, float angle, float bulletSpeed) {
-            SceneAs<Level>().Add(Engine.Pooler.Create<TurretBullet>().Init(this, player, angle, bulletSpeed));
-        }
-
-        private void SoundUpdate() {
-            if (helicopterInstance != null) {
-                Audio.Position(helicopterInstance, Center);
-            }
-        }
-
         public int IdleUpdate() {
             SoundUpdate();
             Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
             if (!activated) {
                 if (countbool) {
                     DelayTimer -= Engine.DeltaTime;
-
                     if (DelayTimer <= 0f) {
                         countbool = false;
                         countbool2 = true;
@@ -169,62 +145,21 @@ namespace Celeste.Mod.HonlyHelper {
                     }
                 } else if (countbool2) {
                     DelayTimer -= Engine.DeltaTime;
-
                     if (DelayTimer <= 0f) {
                         countbool2 = false;
                         activated = true;
                         if (CanSeePlayer(player)) {
-                            return 1;
+                            return StDelay;
                         }
                     }
                 }
 
-                return 0;
+                return StIdle;
             } else if (CanSeePlayer(player)) {
-
-                return 1;
+                return StDelay;
             }
 
-            return 0;
-        }
-
-        public int DelayUpdate() {
-            SoundUpdate();
-            Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
-            if (player == null || !activated) {
-                TurretSprite.Play("Idle");
-                return 0;
-            }
-
-            if (DelayTimer >= 0f) {
-                DelayTimer -= Engine.DeltaTime;
-
-                if (DelayTimer <= 0f) {
-
-                    return 2;
-                } else if (DelayTimer <= aimTime / 4 && !samplegot[3]) {
-                    sample[3] = player.Center;
-                    samplegot[3] = true;
-
-                } else if (DelayTimer <= aimTime / 2 && !samplegot[2]) {
-                    sample[2] = player.Center;
-                    samplegot[2] = true;
-                } else if (DelayTimer <= 0.75 * aimTime && !samplegot[1]) {
-                    sample[1] = player.Center;
-                    samplegot[1] = true;
-
-                } else if (DelayTimer <= aimTime && !samplegot[0]) {
-                    sample[0] = player.Center;
-                    samplegot[0] = true;
-                }
-            }
-
-            if (CanSeePlayer(player)) {
-                return 1;
-            }
-
-            TurretSprite.Play("Idle");
-            return 0;
+            return StIdle;
         }
 
         public void DelayBegin() {
@@ -237,23 +172,41 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
-        public int CooldownUpdate() {
+        public int DelayUpdate() {
             SoundUpdate();
-            if (!activated) {
+            Player player = SceneAs<Level>().Tracker.GetEntity<Player>();
+            if (player == null || !activated) {
                 TurretSprite.Play("Idle");
-                return 0;
+                return StIdle;
             }
 
             if (DelayTimer >= 0f) {
                 DelayTimer -= Engine.DeltaTime;
                 if (DelayTimer <= 0f) {
-                    TurretSprite.Play("Idle");
-                    return 0;
+                    return StCooldown;
+                } else if (DelayTimer <= aimTime / 4 && !samplegot[3]) {
+                    sample[3] = player.Center;
+                    samplegot[3] = true;
+                } else if (DelayTimer <= aimTime / 2 && !samplegot[2]) {
+                    sample[2] = player.Center;
+                    samplegot[2] = true;
+                } else if (DelayTimer <= 0.75 * aimTime && !samplegot[1]) {
+                    sample[1] = player.Center;
+                    samplegot[1] = true;
+                } else if (DelayTimer <= aimTime && !samplegot[0]) {
+                    sample[0] = player.Center;
+                    samplegot[0] = true;
                 }
             }
 
-            return 2;
+            if (CanSeePlayer(player)) {
+                return StDelay;
+            }
+
+            TurretSprite.Play("Idle");
+            return StIdle;
         }
+
         public void CooldownBegin() {
             TurretSprite.Play("Cooldown");
             Random rand = new(seed);
@@ -277,10 +230,48 @@ namespace Celeste.Mod.HonlyHelper {
             Vector2 playerExpect = player.Center + (speed5 * (4 / aimTime) * timetohit);
             float bulletSpeed = (playerExpect - Center).Length() * (1 / timetohit);
 
-            angle = (playerExpect - Center).Angle();
+            Angle = (playerExpect - Center).Angle();
             // also shoot or something
-            Shoot(player, angle, bulletSpeed);
+            Shoot(player, Angle, bulletSpeed);
             Audio.Play("event:/HonlyHelper/shot", Center);
+        }
+
+        public int CooldownUpdate() {
+            SoundUpdate();
+            if (!activated) {
+                TurretSprite.Play("Idle");
+                return StIdle;
+            }
+
+            if (DelayTimer >= 0f) {
+                DelayTimer -= Engine.DeltaTime;
+                if (DelayTimer <= 0f) {
+                    TurretSprite.Play("Idle");
+                    return StIdle;
+                }
+            }
+
+            return StCooldown;
+        }
+
+        private bool CanSeePlayer(Player player) {
+            if (player == null) {
+                return false;
+            }
+
+            // less strict method, it should do like a cube, 2x2 big
+            return (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX))
+                && (!Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY + Vector2.UnitX) || !Scene.CollideCheck<Solid>(Center + Vector2.One, player.Center - Vector2.UnitY - Vector2.UnitX));
+        }
+
+        private void Shoot(Player player, float angle, float bulletSpeed) {
+            SceneAs<Level>().Add(Engine.Pooler.Create<TurretBullet>().Init(this, player, angle, bulletSpeed));
+        }
+
+        private void SoundUpdate() {
+            if (helicopterInstance != null) {
+                Audio.Position(helicopterInstance, Center);
+            }
         }
     }
 }

@@ -8,17 +8,16 @@ namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/Jellyfish")]
     public class Jellyfish : Creechure {
+        private const float JellyMaxVelocity = 50f;
+
         public Player friend;
         public Vector2 homeAnchor;
         public Vector2 goalAnchor;
 
-        private const float jellyMaxVelocity = 50f;
-
-        private float floatTimer;
-        private bool whenufloatin = false;
-
         private readonly Sprite jellySprite;
+        private float floatTimer;
         private float angle;
+        private bool whenufloatin = false;    
 
         public Jellyfish(Vector2 position)
             : base(position) {
@@ -51,20 +50,20 @@ namespace Celeste.Mod.HonlyHelper {
             floatTimer -= Engine.DeltaTime;
             if (floatTimer < 0 && !whenufloatin) {
                 whenufloatin = true;
-                Add(new Coroutine(jellyFlapFlap(UpdateMovementGoal(homeAnchor))));
+                Add(new Coroutine(JellyFlapFlap(UpdateMovementGoal(homeAnchor))));
             }
 
             base.Update();
         }
 
-        public void OnPlayer(Player player) {
+        private void OnPlayer(Player player) {
             friend = player;
             foreach (Jellyfish jellyFriend in friendJar) {
                 jellyFriend.OnPlayerProxy(player);
             }
         }
 
-        public void OnPlayerProxy(Player player) {
+        private void OnPlayerProxy(Player player) {
             friend = player;
         }
 
@@ -77,7 +76,7 @@ namespace Celeste.Mod.HonlyHelper {
             return movementGoal;
         }
 
-        public IEnumerator jellyFlapFlap(Vector2 goal) {
+        private IEnumerator JellyFlapFlap(Vector2 goal) {
             float deltaX = goal.X - Position.X;
             float goalanglex = (float)(Math.Abs(deltaX) > 48 ? 0.25f * Math.PI : 0.25f * Math.PI * (Math.Abs(deltaX) / 48f)) * (deltaX > 0 ? 1 : -1);
             float rotationsize = Math.Abs(angle - goalanglex);
@@ -92,13 +91,13 @@ namespace Celeste.Mod.HonlyHelper {
             float launchSpeed = 0f;
             yield return null;
 
-            while (launchSpeed < 0.95 * jellyMaxVelocity) {
-                launchSpeed = Calc.Approach(launchSpeed, jellyMaxVelocity, 50 * Engine.DeltaTime);
+            while (launchSpeed < 0.95 * JellyMaxVelocity) {
+                launchSpeed = Calc.Approach(launchSpeed, JellyMaxVelocity, 50 * Engine.DeltaTime);
                 speed = (Vector2.UnitY * 16f) + (-Vector2.UnitY.Rotate(angle) * launchSpeed);
                 yield return null;
             }
 
-            while (launchSpeed > 0.02 * jellyMaxVelocity) {
+            while (launchSpeed > 0.02 * JellyMaxVelocity) {
                 launchSpeed = Calc.Approach(launchSpeed, 0f, 25f * Engine.DeltaTime);
                 speed = (Vector2.UnitY * 16f) + (-Vector2.UnitY.Rotate(angle) * launchSpeed);
                 yield return null;

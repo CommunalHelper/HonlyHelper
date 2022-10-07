@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.Entities;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
@@ -8,7 +8,9 @@ using System.Collections.Generic;
 namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/FloatyBgTile")]
-    public class FloatyBgTile : Entity {
+    public class FloatyBgTile : Platform {
+        private const string BgTileListDynamicDataName = "BgTileList";
+
         public List<FloatyBgTile> Group;
         public List<FloatySpaceBlock> Floaties;
         public Dictionary<Entity, Vector2> Moves;
@@ -24,10 +26,10 @@ namespace Celeste.Mod.HonlyHelper {
         private FloatyBgTile master;
         private bool awake;
         private bool HookedToFg;
-        private FloatySpaceBlock HookedFg;
 
+        // Inherits from Platform so that we can add the bg tile to a floaty fg tile
         public FloatyBgTile(Vector2 position, float width, float height, char tileType, bool disableSpawnOffset)
-            : base(position) {
+            : base(position, true) {
             this.tileType = tileType;
             sinkTimer = 0.3f;
             Depth = 10000;
@@ -42,6 +44,10 @@ namespace Celeste.Mod.HonlyHelper {
 
         public bool HasGroup { get; private set; }
         public bool MasterOfGroup { get; private set; }
+
+        private static List<FloatyBgTile> GetBgTileList(FloatySpaceBlock block) => DynamicData.For(block).Get<List<FloatyBgTile>>(BgTileListDynamicDataName);
+        private static void SetBgTileList(FloatySpaceBlock block, List<FloatyBgTile> tiles) => DynamicData.For(block).Set(BgTileListDynamicDataName, tiles);
+        private static void FloatySpaceBlock_AddToGroupAndFindChildren(FloatySpaceBlock parent, FloatySpaceBlock child) => DynamicData.For(parent).Invoke("AddToGroupAndFindChildren", new object[] { child });
 
         public override void Awake(Scene scene) {
             base.Awake(scene);
@@ -96,6 +102,14 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
+        public override void MoveHExact(int move) {
+            Position.X += move;
+        }
+
+        public override void MoveVExact(int move) {
+            Position.Y += move;
+        }
+
         public override void Removed(Scene scene) {
             tiles = null;
             Moves = null;
@@ -106,43 +120,43 @@ namespace Celeste.Mod.HonlyHelper {
         internal static void Load() {
             On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren += AddToGroupAndFindChildrenAddendum;
             On.Celeste.FloatySpaceBlock.Awake += AwakeAddendum;
-            On.Celeste.FloatySpaceBlock.MoveToTarget += MoveToTargetAddendum;
 
         }
         internal static void Unload() {
             On.Celeste.FloatySpaceBlock.AddToGroupAndFindChildren -= AddToGroupAndFindChildrenAddendum;
             On.Celeste.FloatySpaceBlock.Awake -= AwakeAddendum;
-            On.Celeste.FloatySpaceBlock.MoveToTarget -= MoveToTargetAddendum;
         }
 
         private static void AddToGroupAndFindChildrenAddendum(On.Celeste.FloatySpaceBlock.orig_AddToGroupAndFindChildren orig, FloatySpaceBlock self, FloatySpaceBlock from) {
             orig(self, from);
-            DynamicData FloatySpaceBlockData = new(self);
-            if (FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList") != null) {
-                foreach (FloatyBgTile item3 in self.Scene.CollideAll<FloatyBgTile>(new Rectangle((int)from.X, (int)from.Y, (int)from.Width, (int)from.Height))) {
-                    if (!FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList").Contains(item3)) {
-                        if (!item3.awake) {
-                            item3.Awake(self.Scene);
-                        }
 
-                        FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList").Add(item3);
-                        FloatyBgTile item4 = item3;
-                        if (item3.MasterOfGroup) {
-                            item4 = item3;
-                            item3.HookedFg = self;
-                            item3.HookedToFg = true;
+            if (GetBgTileList(self) is not List<FloatyBgTile> bgTileList) {
+                return;
+            }
 
-                        } else {
-                            item4 = item3.master;
-                            item3.master.HookedFg = self;
-                            item3.master.HookedToFg = true;
-                        }
+            foreach (FloatyBgTile bgTile in self.Scene.CollideAll<FloatyBgTile>(new Rectangle((int)from.X, (int)from.Y, (int)from.Width, (int)from.Height))) {
+                if (!bgTileList.Contains(bgTile)) {
+                    if (!bgTile.awake) {
+                        bgTile.Awake(self.Scene);
+                    }
 
-                        foreach (FloatyBgTile floatyBoy in item4.Group) {
-                            foreach (FloatySpaceBlock entity in self.Scene.Tracker.GetEntities<FloatySpaceBlock>()) {
-                                if (!entity.HasGroup && self.Scene.CollideCheck(new Rectangle((int)floatyBoy.X, (int)floatyBoy.Y, (int)floatyBoy.Width, (int)floatyBoy.Height), entity)) {
-                                    DynamicData.For(self).Invoke("AddToGroupAndFindChildren", new object[] { entity });
-                                }
+                    bgTileList.Add(bgTile);
+
+                    // make the FG tile handle moving our BG tile.
+                    self.Moves[bgTile] = bgTile.Position;
+
+                    FloatyBgTile masterBgTile = bgTile.MasterOfGroup ? bgTile : bgTile.master;
+                    masterBgTile.HookedToFg = true;
+
+                    foreach (FloatyBgTile otherBg in masterBgTile.Group) {
+                        // also attach all remaining floaty tiles in our group to the fg tile.
+                        // this is needed to make sure that the group forms correctly regardless of load order.
+                        self.Moves[otherBg] = otherBg.Position;
+
+                        // try to continue expanding our group via nearby floaty fg tiles.
+                        foreach (FloatySpaceBlock entity in self.Scene.Tracker.GetEntities<FloatySpaceBlock>()) {
+                            if (!entity.HasGroup && self.Scene.CollideCheck(new Rectangle((int)otherBg.X, (int)otherBg.Y, (int)otherBg.Width, (int)otherBg.Height), entity)) {
+                                FloatySpaceBlock_AddToGroupAndFindChildren(self, entity);
                             }
                         }
                     }
@@ -150,27 +164,12 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
-        public static void AwakeAddendum(On.Celeste.FloatySpaceBlock.orig_Awake orig, FloatySpaceBlock self, Scene scene) {
+        private static void AwakeAddendum(On.Celeste.FloatySpaceBlock.orig_Awake orig, FloatySpaceBlock self, Scene scene) {
             if (!self.HasGroup) {
-                DynamicData.For(self).Set("BgTileList", new List<FloatyBgTile>());
+                SetBgTileList(self, new List<FloatyBgTile>());
             }
 
             orig(self, scene);
-        }
-
-        private static void MoveToTargetAddendum(On.Celeste.FloatySpaceBlock.orig_MoveToTarget orig, FloatySpaceBlock self) {
-            orig(self);
-            DynamicData FloatySpaceBlockData = new(self);
-            float num = (float)Math.Sin(FloatySpaceBlockData.Get<float>("sineWave")) * 4f;
-            Vector2 vector = Calc.YoYo(Ease.QuadIn(FloatySpaceBlockData.Get<float>("dashEase"))) * FloatySpaceBlockData.Get<Vector2>("dashDirection") * 8f;
-            float ylerpFloaty = FloatySpaceBlockData.Get<float>("yLerp");
-
-            List<FloatyBgTile> bgTileList = FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList");
-            foreach (FloatyBgTile entity in bgTileList) {
-                if (entity.MasterOfGroup) {
-                    entity.MoveToTargetAttached(num, vector, ylerpFloaty);
-                }
-            }
         }
 
         private void TryToInitPosition() {
@@ -215,7 +214,6 @@ namespace Celeste.Mod.HonlyHelper {
                 if (!entity.HasGroup && (Scene.CollideCheck(new Rectangle((int)from.X - 1, (int)from.Y, (int)from.Width + 2, (int)from.Height), entity) || Scene.CollideCheck(new Rectangle((int)from.X, (int)from.Y - 1, (int)from.Width, (int)from.Height + 2), entity))) {
                     if (from.HookedToFg) {
                         entity.HookedToFg = true;
-                        entity.HookedFg = from.HookedFg;
                     }
 
                     AddToGroupAndFindChildren(entity);
@@ -236,19 +234,6 @@ namespace Celeste.Mod.HonlyHelper {
                         key.Position.Y = num2;
                         key.Position.X = value.X;
                     }
-                }
-            }
-        }
-
-        private void MoveToTargetAttached(float num, Vector2 vector, float ylerp) {
-            for (int i = 0; i < 2; i++) {
-                foreach (KeyValuePair<Entity, Vector2> move in Moves) {
-                    Entity key = move.Key;
-                    Vector2 value = move.Value;
-
-                    float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(ylerp)) + num;
-                    key.Position.Y = num2 + vector.Y;
-                    key.Position.X = value.X + vector.X;
                 }
             }
         }

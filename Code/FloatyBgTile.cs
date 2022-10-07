@@ -4,14 +4,11 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/FloatyBgTile")]
     public class FloatyBgTile : Entity {
-        private static readonly MethodInfo FloatyAddToGroupAndFindChildren = typeof(FloatySpaceBlock).GetMethod("AddToGroupAndFindChildren", BindingFlags.Instance | BindingFlags.NonPublic);
-
         public List<FloatyBgTile> Group;
         public List<FloatySpaceBlock> Floaties;
         public Dictionary<Entity, Vector2> Moves;
@@ -144,7 +141,7 @@ namespace Celeste.Mod.HonlyHelper {
                         foreach (FloatyBgTile floatyBoy in item4.Group) {
                             foreach (FloatySpaceBlock entity in self.Scene.Tracker.GetEntities<FloatySpaceBlock>()) {
                                 if (!entity.HasGroup && self.Scene.CollideCheck(new Rectangle((int)floatyBoy.X, (int)floatyBoy.Y, (int)floatyBoy.Width, (int)floatyBoy.Height), entity)) {
-                                    FloatyAddToGroupAndFindChildren.Invoke(self, new object[] { entity });
+                                    DynamicData.For(self).Invoke("AddToGroupAndFindChildren", new object[] { entity });
                                 }
                             }
                         }
@@ -155,8 +152,7 @@ namespace Celeste.Mod.HonlyHelper {
 
         public static void AwakeAddendum(On.Celeste.FloatySpaceBlock.orig_Awake orig, FloatySpaceBlock self, Scene scene) {
             if (!self.HasGroup) {
-                DynData<FloatySpaceBlock> FloatySpaceBlockData = new(self);
-                FloatySpaceBlockData["BgTileList"] = new List<FloatyBgTile>();
+                DynamicData.For(self).Set("BgTileList", new List<FloatyBgTile>());
             }
 
             orig(self, scene);
@@ -164,15 +160,15 @@ namespace Celeste.Mod.HonlyHelper {
 
         private static void MoveToTargetAddendum(On.Celeste.FloatySpaceBlock.orig_MoveToTarget orig, FloatySpaceBlock self) {
             orig(self);
-            DynData<FloatySpaceBlock> FloatySpaceBlockData = new(self);
+            DynamicData FloatySpaceBlockData = new(self);
             float num = (float)Math.Sin(FloatySpaceBlockData.Get<float>("sineWave")) * 4f;
             Vector2 vector = Calc.YoYo(Ease.QuadIn(FloatySpaceBlockData.Get<float>("dashEase"))) * FloatySpaceBlockData.Get<Vector2>("dashDirection") * 8f;
             float ylerpFloaty = FloatySpaceBlockData.Get<float>("yLerp");
-            if (FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList") != null) {
-                foreach (FloatyBgTile entity in FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList")) {
-                    if (entity.MasterOfGroup) {
-                        entity.MoveToTargetAttached(num, vector, ylerpFloaty);
-                    }
+
+            List<FloatyBgTile> bgTileList = FloatySpaceBlockData.Get<List<FloatyBgTile>>("BgTileList");
+            foreach (FloatyBgTile entity in bgTileList) {
+                if (entity.MasterOfGroup) {
+                    entity.MoveToTargetAttached(num, vector, ylerpFloaty);
                 }
             }
         }
@@ -253,7 +249,6 @@ namespace Celeste.Mod.HonlyHelper {
                     float num2 = MathHelper.Lerp(value.Y, value.Y + 12f, Ease.SineInOut(ylerp)) + num;
                     key.Position.Y = num2 + vector.Y;
                     key.Position.X = value.X + vector.X;
-
                 }
             }
         }

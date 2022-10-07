@@ -4,19 +4,11 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Collections;
-using System.Reflection;
 
 namespace Celeste.Mod.HonlyHelper {
     [TrackedAs(typeof(FallingBlock))]
     [CustomEntity("HonlyHelper/RisingBlock")]
     public class RisingBlock : FallingBlock {
-        private static readonly MethodInfo FallingPlayerFallCheck = typeof(FallingBlock).GetMethod("PlayerFallCheck", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo FallingShakeSfx = typeof(FallingBlock).GetMethod("ShakeSfx", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo FallingHighlightFade = typeof(FallingBlock).GetMethod("HighlightFade", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo FallingPlayerWaitCheck = typeof(FallingBlock).GetMethod("PlayerWaitCheck", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo FallingImpactSfx = typeof(FallingBlock).GetMethod("ImpactSfx", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo FallingLandParticles = typeof(FallingBlock).GetMethod("LandParticles", BindingFlags.Instance | BindingFlags.NonPublic);
-
         private readonly DynamicData baseData;
 
         public RisingBlock(Vector2 position, char tile, int width, int height, bool finalBoss, bool behind, bool climbFall)
@@ -40,7 +32,7 @@ namespace Celeste.Mod.HonlyHelper {
             if (self is RisingBlock block) {
                 bool finalBoss = block.baseData.Get<bool>("finalBoss");
 
-                while (!self.Triggered && (finalBoss || !(bool)FallingPlayerFallCheck.Invoke(self, new object[] { }))) {
+                while (!self.Triggered && (finalBoss || !block.baseData.Invoke<bool>("PlayerFallCheck"))) {
                     yield return null;
                 }
 
@@ -50,11 +42,11 @@ namespace Celeste.Mod.HonlyHelper {
                 }
 
                 while (true) {
-                    FallingShakeSfx.Invoke(self, new object[] { });
+                    block.baseData.Invoke("ShakeSfx");
                     self.StartShaking();
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
                     if (finalBoss) {
-                        self.Add(new Coroutine((IEnumerator)FallingHighlightFade.Invoke(self, new object[] { 1f })));
+                        self.Add(new Coroutine(block.baseData.Invoke<IEnumerator>("HighlightFade", new object[] { 1f })));
                     }
 
                     yield return 0.2f;
@@ -63,7 +55,7 @@ namespace Celeste.Mod.HonlyHelper {
                         timer = 0.2f;
                     }
 
-                    while (timer > 0f && ((bool)FallingPlayerWaitCheck.Invoke(self, new object[] { }))) {
+                    while (timer > 0f && block.baseData.Invoke<bool>("PlayerWaitCheck")) {
                         yield return null;
                         timer -= Engine.DeltaTime;
                     }
@@ -103,15 +95,15 @@ namespace Celeste.Mod.HonlyHelper {
                         yield return null;
                     }
 
-                    FallingImpactSfx.Invoke(self, new object[] { });
+                    block.baseData.Invoke("ImpactSfx");
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     self.SceneAs<Level>().DirectionalShake(Vector2.UnitY, finalBoss ? 0.2f : 0.3f);
                     if (finalBoss) {
-                        self.Add(new Coroutine((IEnumerator)FallingHighlightFade.Invoke(self, new object[] { 0f })));
+                        self.Add(new Coroutine(block.baseData.Invoke<IEnumerator>("HighlightFade", new object[] { 0f })));
                     }
 
                     self.StartShaking();
-                    FallingLandParticles.Invoke(self, new object[] { });
+                    block.baseData.Invoke("LandParticles");
                     yield return 0.2f;
                     self.StopShaking();
                     if (self.CollideCheck<SolidTiles>(new Vector2(self.Position.X, self.Top - 1f))) {

@@ -4,12 +4,13 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Celeste.Mod.HonlyHelper {
     [Tracked]
     [CustomEntity("HonlyHelper/FloatyBgTile")]
-    public class FloatyBgTile : Platform { // inherit from Platform so that we can add the bg tile to a floaty fg tile
+    public class FloatyBgTile : Platform {
+        private const string BgTileListDynamicDataName = "BgTileList";
+
         public List<FloatyBgTile> Group;
         public List<FloatySpaceBlock> Floaties;
         public Dictionary<Entity, Vector2> Moves;
@@ -26,6 +27,7 @@ namespace Celeste.Mod.HonlyHelper {
         private bool awake;
         private bool HookedToFg;
 
+        // Inherits from Platform so that we can add the bg tile to a floaty fg tile
         public FloatyBgTile(Vector2 position, float width, float height, char tileType, bool disableSpawnOffset)
             : base(position, true) {
             this.tileType = tileType;
@@ -42,6 +44,10 @@ namespace Celeste.Mod.HonlyHelper {
 
         public bool HasGroup { get; private set; }
         public bool MasterOfGroup { get; private set; }
+
+        private static List<FloatyBgTile> GetBgTileList(FloatySpaceBlock block) => DynamicData.For(block).Get<List<FloatyBgTile>>(BgTileListDynamicDataName);
+        private static void SetBgTileList(FloatySpaceBlock block, List<FloatyBgTile> tiles) => DynamicData.For(block).Set(BgTileListDynamicDataName, tiles);
+        private static void FloatySpaceBlock_AddToGroupAndFindChildren(FloatySpaceBlock parent, FloatySpaceBlock child) => DynamicData.For(parent).Invoke("AddToGroupAndFindChildren", new object[] { child });
 
         public override void Awake(Scene scene) {
             base.Awake(scene);
@@ -96,6 +102,14 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
+        public override void MoveHExact(int move) {
+            Position.X += move;
+        }
+
+        public override void MoveVExact(int move) {
+            Position.Y += move;
+        }
+
         public override void Removed(Scene scene) {
             tiles = null;
             Moves = null;
@@ -116,7 +130,7 @@ namespace Celeste.Mod.HonlyHelper {
         private static void AddToGroupAndFindChildrenAddendum(On.Celeste.FloatySpaceBlock.orig_AddToGroupAndFindChildren orig, FloatySpaceBlock self, FloatySpaceBlock from) {
             orig(self, from);
 
-            if (GetBgTileList(self) is not { } bgTileList) {
+            if (GetBgTileList(self) is not List<FloatyBgTile> bgTileList) {
                 return;
             }
 
@@ -131,7 +145,7 @@ namespace Celeste.Mod.HonlyHelper {
                     // make the FG tile handle moving our BG tile.
                     self.Moves[bgTile] = bgTile.Position;
 
-                    var masterBgTile = bgTile.MasterOfGroup ? bgTile : bgTile.master;
+                    FloatyBgTile masterBgTile = bgTile.MasterOfGroup ? bgTile : bgTile.master;
                     masterBgTile.HookedToFg = true;
 
                     foreach (FloatyBgTile otherBg in masterBgTile.Group) {
@@ -150,21 +164,13 @@ namespace Celeste.Mod.HonlyHelper {
             }
         }
 
-        public static void AwakeAddendum(On.Celeste.FloatySpaceBlock.orig_Awake orig, FloatySpaceBlock self, Scene scene) {
+        private static void AwakeAddendum(On.Celeste.FloatySpaceBlock.orig_Awake orig, FloatySpaceBlock self, Scene scene) {
             if (!self.HasGroup) {
-                SetBgTileList(self, new());
+                SetBgTileList(self, new List<FloatyBgTile>());
             }
 
             orig(self, scene);
         }
-
-        private static readonly Action<FloatySpaceBlock, FloatySpaceBlock> FloatySpaceBlock_AddToGroupAndFindChildren =
-            typeof(FloatySpaceBlock).GetMethod("AddToGroupAndFindChildren", BindingFlags.Instance | BindingFlags.NonPublic)
-            .CreateDelegate<Action<FloatySpaceBlock, FloatySpaceBlock>>();
-
-        private const string BgTileListDynamicDataName = "BgTileList";
-        private static List<FloatyBgTile> GetBgTileList(FloatySpaceBlock block) => DynamicData.For(block).Get<List<FloatyBgTile>>(BgTileListDynamicDataName);
-        private static void SetBgTileList(FloatySpaceBlock block, List<FloatyBgTile> tiles) => DynamicData.For(block).Set(BgTileListDynamicDataName, tiles);
 
         private void TryToInitPosition() {
             if (MasterOfGroup) {
@@ -230,14 +236,6 @@ namespace Celeste.Mod.HonlyHelper {
                     }
                 }
             }
-        }
-
-        public override void MoveHExact(int move) {
-            Position.X += move;
-        }
-
-        public override void MoveVExact(int move) {
-            Position.Y += move;
         }
     }
 }

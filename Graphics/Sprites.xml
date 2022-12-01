@@ -1,0 +1,8 @@
+<Sprites>
+
+<HonlyHelper_CatPetter path="characters/HonlyHelper/CatPetter/" start="idle">
+  <Loop id="idle" path="player_idle" delay="0.5" frames="0"/>
+  <Loop id="pet" path="player_pet" delay="0.15" frames="0-3"/>
+</HonlyHelper_CatPetter>
+
+</Sprites>

@@ -16,13 +16,12 @@ namespace Celeste.Mod.HonlyHelper {
         private bool PettingInProgress = false;
         private Vector2 friendposition;
 
-        public PettableCat(Vector2 position, string CatFlag, string texture = "objects/HonlyHelper/pettableCat/")
-             : base(position)
-        {
+        public PettableCat(Vector2 position, string CatFlag)
+           : base(position) {
             ThePetterSprite = GFX.SpriteBank.Create("HonlyHelper_CatPetter");
             Add(ThePetterSprite);
 
-            CatSprite = new Sprite(GFX.Game, texture);
+            CatSprite = new Sprite(GFX.Game, "objects/HonlyHelper/pettableCat/");
             CatSprite.AddLoop("idle", "spoons_idle", 0.15f);
             CatSprite.Add("pet", "spoons_pet", 0.15f);
             Add(CatSprite);
@@ -31,8 +30,8 @@ namespace Celeste.Mod.HonlyHelper {
         }
 
         public PettableCat(EntityData data, Vector2 offset)
-             : this(data.Position + offset, data.Attr("catFlag"))
-        { }
+            : this(data.Position + offset, data.Attr("catFlag")) { 
+        }
 
 
         public override void Added(Scene scene) {
@@ -41,21 +40,18 @@ namespace Celeste.Mod.HonlyHelper {
             CatAnchor = CatSprite.Position;
         }
 
-        public override void Awake(Scene scene)
-        {
+        public override void Awake(Scene scene) {
             base.Awake(scene);
             CatSprite.Play("idle");
             ThePetterSprite.Play("idle");
         }
 
-        private void OnPetting(Player player)
-        {
+        private void OnPetting(Player player) {
             Level.StartCutscene(OnPettingEnd);
             Add(pettingRoutine = new Coroutine(ThePetting(player)));
         }
 
-        private IEnumerator ThePetting(Player player)
-        {
+        private IEnumerator ThePetting(Player player) {
             yield return PlayerApproachLeftSide(player, turnToFace: true, 6f);
             friendposition = player.Sprite.Position;
             PettingInProgress = true;
@@ -75,8 +71,7 @@ namespace Celeste.Mod.HonlyHelper {
             SceneAs<Level>().Session.SetFlag(catFlag);
         }
 
-        private void OnPettingEnd(Level level)
-        {
+        private void OnPettingEnd(Level level) {
             Player entity = Scene.Tracker.GetEntity<Player>();
             if (entity != null)
             {

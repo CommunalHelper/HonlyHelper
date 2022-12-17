@@ -71,18 +71,7 @@ namespace Celeste.Mod.HonlyHelper {
             base.Update();
         }
 
-        private IEnumerator FireFlyUpdate() {
-            while (true) {
-                longtermFlightGoal = anchor + new Vector2(((2 * Calc.Random.NextFloat()) - 1) * RoamRadius, ((2 * Calc.Random.NextFloat()) - 1) * RoamRadius);
-                while ((longtermFlightGoal - Position).LengthSquared() > 5) {
-                    FlightGoal = Calc.Approach(FlightGoal, longtermFlightGoal, 10f * Engine.DeltaTime);
-                    yield return null;
-                }
-                yield return (Calc.Random.NextFloat() * 0.5f) + 1f;
-            }
-        }
-
-        private IEnumerator Blink() {
+        public IEnumerator Blink() {
             while (Brightness < 0.98f && !BlinkCancel) {
                 ease = Calc.Approach(ease, 1f, Engine.DeltaTime * 8f);
                 Brightness = Ease.CubeIn(ease);
@@ -101,6 +90,17 @@ namespace Celeste.Mod.HonlyHelper {
             BlinkTimer = BlinkTimerMax * ((Calc.Random.NextFloat() * 0.5f) + 0.9f);
             BlinkCancel = false;
             yield return null;
+        }
+
+        private IEnumerator FireFlyUpdate() {
+            while (true) {
+                longtermFlightGoal = anchor + new Vector2(((2 * Calc.Random.NextFloat()) - 1) * RoamRadius, ((2 * Calc.Random.NextFloat()) - 1) * RoamRadius);
+                while ((longtermFlightGoal - Position).LengthSquared() > 5) {
+                    FlightGoal = Calc.Approach(FlightGoal, longtermFlightGoal, 10f * Engine.DeltaTime);
+                    yield return null;
+                }
+                yield return (Calc.Random.NextFloat() * 0.5f) + 1f;
+            }
         }
 
         private Color BrightnessToColour(float Bright) {

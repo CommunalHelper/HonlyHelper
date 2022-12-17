@@ -10,6 +10,7 @@ namespace Celeste.Mod.HonlyHelper {
         private readonly string GothDialogID; //cutscene name, lacking Id at end i.e. "BaddyDialog_" becoming "BaddyDialog_0", "BaddyDialog_1", etc
         private readonly int DialogAmount; //amount of dialogs this trigger can call on, so final cutscene is GothDialogID + N-1
         private readonly bool Loops; //if loops == true, will rotate through entire set of dialog IDs, looping when reaching the end. otherwise only repeats final dialog
+        private readonly bool Ends; //if ends == true, badeline will just not show up after finishing the loop once. overrides "Loops"
 
         private Coroutine TattleCoroutine;
         private Level level;
@@ -24,6 +25,7 @@ namespace Celeste.Mod.HonlyHelper {
             GothDialogID = data.Attr("GothDialogID");
             DialogAmount = data.Int("DialogAmount");
             Loops = data.Bool("Loops");
+            Ends = data.Bool("Ends");
         }
 
         public override void Added(Scene scene) {
@@ -38,12 +40,14 @@ namespace Celeste.Mod.HonlyHelper {
             base.OnStay(player);
             if (HonlyHelperModule.Settings.TalkToBadeline.Pressed && !Tattling) {
                 HonlyHelperModule.Settings.TalkToBadeline.ConsumePress();
-                Tattling = true;
-                player.StateMachine.State = Player.StDummy;
-                player.StateMachine.Locked = true;
-                player.ForceCameraUpdate = true;
-                level.StartCutscene(OnTattleEnd);
-                Add(TattleCoroutine = new Coroutine(TheTattling(player)));
+                if (level.Session.GetCounter(GothDialogID) != DialogAmount) {
+                    Tattling = true;
+                    player.StateMachine.State = 11;
+                    player.StateMachine.Locked = true;
+                    player.ForceCameraUpdate = true;
+                    level.StartCutscene(OnTattleEnd);
+                    Add(TattleCoroutine = new Coroutine(TheTattling(player)));
+                }
             }
         }
 
@@ -54,6 +58,10 @@ namespace Celeste.Mod.HonlyHelper {
             if (dialogCounter == DialogAmount - 1) {
                 if (Loops) {
                     dialogCounter = 0;
+                }
+
+                if (Ends) {
+                    dialogCounter = DialogAmount;
                 }
             } else {
                 dialogCounter++;

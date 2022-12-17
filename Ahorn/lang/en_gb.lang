@@ -39,4 +39,4 @@ placements.triggers.HonlyHelper/TurretController.tooltips.turretAction=The actio
 placements.triggers.HonlyHelper/GothTattle.tooltips.GothDialogID=The start of the ID of the dialog that should play. Example, "baddytext" would use the dialog IDs "baddytext0", "baddytext1", etc.
 placements.triggers.HonlyHelper/GothTattle.tooltips.DialogAmount=The amount of dialogs you have that start with the GothDialogID.
 placements.triggers.HonlyHelper/GothTattle.tooltips.Loops=Whether the dialog should repeat from the first entry after playing the last one.
-
+placements.triggers.HonlyHelper/GothTattle.tooltips.Ends=Whether the trigger should disable after playing the last entry.

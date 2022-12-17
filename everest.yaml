@@ -1,5 +1,5 @@
 - Name: HonlyHelper
-  Version: 1.7.2
+  Version: 1.7.3
   DLL: Code/bin/HonlyHelper.dll
   Dependencies:
     - Name: Everest

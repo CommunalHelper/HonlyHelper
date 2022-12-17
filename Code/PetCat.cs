@@ -11,21 +11,16 @@ namespace Celeste.Mod.HonlyHelper {
         private readonly string catFlag;
         private Coroutine pettingRoutine;
         private Vector2 CatAnchor;
-        private bool PettingInProgress = false;
-        private Vector2 friendposition;
 
         public PettableCat(Vector2 position, string CatFlag)
            : base(position) {
             CatSprite = new Sprite(GFX.Game, "characters/HonlyHelper/pettableCat/");
             CatSprite.AddLoop("idle", "spoons_idle", 0.15f);
             CatSprite.Add("pet", "spoons_pet", 0.15f);
+            CatSprite.Play("idle");
             Add(CatSprite);
 
-            ThePetterSprite = new Sprite(GFX.Game, "characters/HonlyHelper/pettableCat/ThePetter/");
-            ThePetterSprite.AddLoop("idle", "player_idle", 1f);
-            ThePetterSprite.AddLoop("pet", "player_pet", 0.15f);
-            Add(ThePetterSprite);
-            ThePetterSprite.Position = CatSprite.Position + new Vector2(-22f, -24f);
+            ThePetterSprite = GFX.SpriteBank.Create("HonlyHelper_CatPetter");
 
             catFlag = CatFlag ?? "CatHasBeenPet";
         }
@@ -40,25 +35,21 @@ namespace Celeste.Mod.HonlyHelper {
             CatAnchor = CatSprite.Position;
         }
 
-        public override void Awake(Scene scene) {
-            base.Awake(scene);
-            CatSprite.Play("idle");
-            ThePetterSprite.Play("idle");
-        }
-
         private void OnPetting(Player player) {
             Level.StartCutscene(OnPettingEnd);
             Add(pettingRoutine = new Coroutine(ThePetting(player)));
         }
 
         private IEnumerator ThePetting(Player player) {
-            yield return PlayerApproachLeftSide(player, turnToFace: true, 6f); 
-            friendposition = player.Sprite.Position;
-            PettingInProgress = true;
+            yield return PlayerApproachLeftSide(player, turnToFace: true, 6f);
             CatSprite.Play("pet");
             CatSprite.Position = CatAnchor + new Vector2(-4f, -8f);
-            ThePetterSprite.Play("pet");
-            player.Sprite.Position = friendposition + (Vector2.UnitY * 1000f);
+
+            player.Sprite.Visible = player.Hair.Visible = false;
+            ThePetterSprite.Play("pet", restart: true);
+            Add(ThePetterSprite);
+            ThePetterSprite.Position = CatAnchor + new Vector2(-22f, -24f);
+
             Audio.Play("event:/HonlyHelper/catsfx", Center);
             yield return 2f;
             Level.EndCutscene();
@@ -69,23 +60,15 @@ namespace Celeste.Mod.HonlyHelper {
         }
 
         private void OnPettingEnd(Level level) {
-            Player entity = Scene.Tracker.GetEntity<Player>();
-            if (entity != null) {
-                entity.StateMachine.Locked = false;
-                entity.StateMachine.State = Player.StNormal;
+            if (Scene.Tracker.GetEntity<Player>() is Player player) {
+                player.Sprite.Visible = player.Hair.Visible = true;
             }
 
             pettingRoutine.Cancel();
             pettingRoutine.RemoveSelf();
             CatSprite.Play("idle");
             CatSprite.Position = CatAnchor;
-            if (PettingInProgress == true) {
-                entity.Sprite.Position = friendposition;
-            }
-
-            entity.Sprite.Play("idle");
-            ThePetterSprite.Play("idle");
-            PettingInProgress = false;
+            ThePetterSprite.RemoveSelf();
         }
     }
 }

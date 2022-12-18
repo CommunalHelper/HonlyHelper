@@ -62,6 +62,8 @@ namespace Celeste.Mod.HonlyHelper {
         private void OnPettingEnd(Level level) {
             if (Scene.Tracker.GetEntity<Player>() is Player player) {
                 player.Sprite.Visible = player.Hair.Visible = true;
+                player.StateMachine.Locked = false; // silently set by PlayerApproachLeftSide :(
+                player.StateMachine.State = 0;
             }
 
             pettingRoutine.Cancel();

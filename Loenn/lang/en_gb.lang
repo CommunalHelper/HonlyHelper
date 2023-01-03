@@ -1,0 +1,62 @@
+mods.HonlyHelper.name=HonlyHelper
+# entities
+
+# Turret
+entities.HonlyHelper/Turret.placements.name.default=Turret
+entities.HonlyHelper/Turret.attributes.description.turretID=The ID of the turret for use with the Turret Controller.
+entities.HonlyHelper/Turret.attributes.description.aimTime=How long the turret should spend reading the player's movement before shooting.
+entities.HonlyHelper/Turret.attributes.description.cooldownTime=How long the turret should sit and wait after shooting.
+entities.HonlyHelper/Turret.attributes.description.randomCooldownMultiplier=A random multiplier between 0 and this number gets applied to the cooldown time, and gets added to the existing timer. A multiplier of 1 could double the cooldown time, for example.
+entities.HonlyHelper/Turret.attributes.description.desiredBulletSpeed=How fast the bullet should travel.
+entities.HonlyHelper/Turret.attributes.description.accelerationMultiplier=A multiplier applied to the average measured acceleration in the aiming period. Leave at 1 for normal predictions, or change to 0 for no acceleration predictions. Changing this changes the aim significantly.
+
+# Flag Sound Source
+entities.HonlyHelper/FlagSoundSource.placements.name.default=Flag Sound Source
+entities.HonlyHelper/FlagSoundSource.attributes.description.sound=The event name of the sound you want to play.
+entities.HonlyHelper/FlagSoundSource.attributes.description.flag=The flag you want to use to control the sound.
+entities.HonlyHelper/FlagSoundSource.attributes.description.AllowFade=Whether the sound is allowed to fade out.
+
+# Floaty Bg Tiles
+entities.HonlyHelper/FloatyBgTile.placements.name.default=Floaty Bg Tile
+entities.HonlyHelper/FloatyBgTile.attributes.description.tiletype=What tileset should be used for the tiles.
+
+# cat
+entities.HonlyHelper/PettableCat.placements.name.default=Pettable Cat
+entities.HonlyHelper/PettableCat.attributes.description.catFlag=flag cat, the cat with the flag on it, the flag cat, cat flag
+
+# moth
+entities.HonlyHelper/Moth.placements.name.default=Moth
+
+# jelly
+entities.HonlyHelper/Jellyfish.placements.name.default=Jellyfish Creature
+
+# firefly
+entities.HonlyHelper/FireFly.placements.name.default=Firefly
+
+# rising block
+entities.HonlyHelper/RisingBlock.placements.name.default=Rising Block
+
+# triggers
+
+# Camera Target Crossfade
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.placements.name.default=Camera Target Crossfade Trigger
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.lerpStrengthA=The lerp strength of Target Trigger A
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.lerpStrengthB=The lerp strength of Target Trigger B
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.positionMode=How the player goes from Target Trigger A to Trigger B.
+
+# Camera Target Corner
+triggers.HonlyHelper/CameraTargetCornerTrigger.placements.name.default=Camera Target Corner Trigger
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.lerpStrength=The lerp strength of the trigger.
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.positionMode=What corner this trigger occupies.
+
+# TurretController
+triggers.HonlyHelper/TurretController.placements.name.default=Turret Controller
+triggers.HonlyHelper/TurretController.attributes.description.turretID=The ID of the turret you want to affect.
+triggers.HonlyHelper/TurretController.attributes.description.turretAction=The action that the turret needs to do. The choices are between working with the helicopter sounds, or without. Note: HeliFadeIn takes a long time to fade in (20 seconds roughly).
+
+# Talk To Badeline Trigger
+triggers.HonlyHelper/GothTattle.placements.name.default=Goth Tattle
+triggers.HonlyHelper/GothTattle.attributes.description.GothDialogID=The start of the ID of the dialog that should play. Example, "baddytext" would use the dialog IDs "baddytext0", "baddytext1", etc.
+triggers.HonlyHelper/GothTattle.attributes.description.DialogAmount=The amount of dialogs you have that start with the GothDialogID.
+triggers.HonlyHelper/GothTattle.attributes.description.Loops=Whether the dialog should repeat from the first entry after playing the last one.
+triggers.HonlyHelper/GothTattle.attributes.description.Ends=Whether the trigger should disable after playing the last entry.

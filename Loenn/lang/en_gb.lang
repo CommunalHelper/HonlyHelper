@@ -60,3 +60,9 @@ triggers.HonlyHelper/GothTattle.attributes.description.GothDialogID=The start of
 triggers.HonlyHelper/GothTattle.attributes.description.DialogAmount=The amount of dialogs you have that start with the GothDialogID.
 triggers.HonlyHelper/GothTattle.attributes.description.Loops=Whether the dialog should repeat from the first entry after playing the last one.
 triggers.HonlyHelper/GothTattle.attributes.description.Ends=Whether the trigger should disable after playing the last entry.
+
+# bouncy spikes
+entities.HonlyHelper/BouncySpikesUp.placements.name.bouncy_spikes=Bouncy Spikes (Up)
+entities.HonlyHelper/BouncySpikesDown.placements.name.bouncy_spikes=Bouncy Spikes (Down)
+entities.HonlyHelper/BouncySpikesLeft.placements.name.bouncy_spikes=Bouncy Spikes (Left)
+entities.HonlyHelper/BouncySpikesRight.placements.name.bouncy_spikes=Bouncy Spikes (Right)

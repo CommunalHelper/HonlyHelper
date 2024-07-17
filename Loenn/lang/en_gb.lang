@@ -1,0 +1,82 @@
+mods.HonlyHelper.name=Honly Helper
+
+# -- Entities --
+# Bouncy Spikes
+entities.HonlyHelper/BouncySpikesUp.placements.name.bouncy_spikes=Bouncy Spikes (Up)
+entities.HonlyHelper/BouncySpikesUp.attributes.description.texture=The path to the spike type relative to the Gameplay atlas.\nDefault: objects/HonlyHelper/BouncySpikes/bouncer
+entities.HonlyHelper/BouncySpikesUp.attributes.description.FreezeFrameEnable=Whether hitting the bouncy spikes should activate freeze frames.
+entities.HonlyHelper/BouncySpikesDown.placements.name.bouncy_spikes=Bouncy Spikes (Down)
+entities.HonlyHelper/BouncySpikesDown.attributes.description.texture=The path to the spike type relative to the Gameplay atlas.\nDefault: objects/HonlyHelper/BouncySpikes/bouncer
+entities.HonlyHelper/BouncySpikesDown.attributes.description.FreezeFrameEnable=Whether hitting the bouncy spikes should activate freeze frames.
+entities.HonlyHelper/BouncySpikesLeft.placements.name.bouncy_spikes=Bouncy Spikes (Left)
+entities.HonlyHelper/BouncySpikesLeft.attributes.description.texture=The path to the spike type relative to the Gameplay atlas.\nDefault: objects/HonlyHelper/BouncySpikes/bouncer
+entities.HonlyHelper/BouncySpikesLeft.attributes.description.FreezeFrameEnable=Whether hitting the bouncy spikes should activate freeze frames.
+entities.HonlyHelper/BouncySpikesRight.placements.name.bouncy_spikes=Bouncy Spikes (Right)
+entities.HonlyHelper/BouncySpikesRight.attributes.description.texture=The path to the spike type relative to the Gameplay atlas.\nDefault: objects/HonlyHelper/BouncySpikes/bouncer
+entities.HonlyHelper/BouncySpikesRight.attributes.description.FreezeFrameEnable=Whether hitting the bouncy spikes should activate freeze frames.
+
+# Flag Sound Source
+entities.HonlyHelper/FlagSoundSource.placements.name.flag_sound_source=Flag Sound Source
+entities.HonlyHelper/FlagSoundSource.attributes.description.sound=The event name of the sound you want to play.
+entities.HonlyHelper/FlagSoundSource.attributes.description.flag=The flag you want to use to control the sound.
+entities.HonlyHelper/FlagSoundSource.attributes.description.AllowFade=Whether the sound is allowed to fade out.
+
+# Floaty Bg Tiles
+entities.HonlyHelper/FloatyBgTile.placements.name.floaty_bg_tile=Floaty BG Tiles
+entities.HonlyHelper/FloatyBgTile.attributes.description.tiletype=Determines the visual appearance of the tiles.
+entities.HonlyHelper/FloatyBgTile.attributes.description.disableSpawnOffset=Whether or not the entity should spawn without the random offset.
+
+# Firefly
+entities.HonlyHelper/FireFly.placements.name.firefly=Firefly
+
+# Moth
+entities.HonlyHelper/Moth.placements.name.moth=Möth
+entities.HonlyHelper/Moth.placements.name.moth_normal=Moth
+
+# Pettable Cat
+entities.HonlyHelper/PettableCat.placements.name.pettable_cat=Pettable Cat
+entities.HonlyHelper/PettableCat.attributes.description.catFlag=flag cat, the cat with the flag on it, the flag cat, cat flag
+
+# Turret
+entities.HonlyHelper/Turret.placements.name.turret=Turret (WIP)
+entities.HonlyHelper/Turret.attributes.description.turretID=The ID of the turret for use with the Turret Controller.
+entities.HonlyHelper/Turret.attributes.description.aimTime=How long the turret should spend reading the player's movement before shooting.
+entities.HonlyHelper/Turret.attributes.description.cooldownTime=How long the turret should sit and wait after shooting.
+entities.HonlyHelper/Turret.attributes.description.randomCooldownMultiplier=A random multiplier between 0 and this number gets applied to the cooldown time, and gets added to the existing timer. A multiplier of 1 could double the cooldown time, for example.
+entities.HonlyHelper/Turret.attributes.description.desiredBulletSpeed=How fast the bullet should travel.
+entities.HonlyHelper/Turret.attributes.description.accelerationMultiplier=A multiplier applied to the average measured acceleration in the aiming period. Leave at 1 for normal predictions, or change to 0 for no acceleration predictions. Changing this changes the aim significantly.
+
+# Rising Block
+entities.HonlyHelper/RisingBlock.placements.name.rising_block
+entities.HonlyHelper/RisingBlock.attributes.description.tiletype=Determines the visual appearance of the block.
+
+# -- Triggers --
+# Camera Target Corner
+triggers.HonlyHelper/CameraTargetCornerTrigger.placements.name.camera_target_corner=Camera Target Corner
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.lerpStrength=Determines how fast the camera moves to lock into place upon activation.
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.positionMode=What corner this trigger occupies.
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.xOnly=The camera will only lock on the X axis.
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.yOnly=The camera will only lock on the Y axis.
+triggers.HonlyHelper/CameraTargetCornerTrigger.attributes.description.deleteFlag=Session flag to deactivate the trigger, ignored if left empty. Camera will not reset if player is inside the trigger as it deactivates.\nIf the player transitions into the room with the flag set, the trigger can not be reactivated. However, if it was enabled and then disabled in the room, the player can reactivate it.
+
+# Camera Target Crossfade
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.placements.name.camera_target_crossfade=Camera Target Crossfade
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.lerpStrengthA=The lerp strength of Target Trigger A
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.lerpStrengthB=The lerp strength of Target Trigger B
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.positionMode=How the player goes from Target Trigger A to Trigger B.
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.xOnly=The camera will only lock on the X axis.
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.yOnly=The camera will only lock on the Y axis.
+triggers.HonlyHelper/CameraTargetCrossfadeTrigger.attributes.description.deleteFlag=Session flag to deactivate the trigger, ignored if left empty. Camera will not reset if player is inside the trigger as it deactivates.\nIf the player transitions into the room with the flag set, the trigger can not be reactivated. However, if it was enabled and then disabled in the room, the player can reactivate it.
+
+# Talk To Badeline
+triggers.HonlyHelper/GothTattle.placements.name.talk_to_badeline=Talk to Badeline
+triggers.HonlyHelper/GothTattle.placements.name.goth_tattle=Goth Tattle
+triggers.HonlyHelper/GothTattle.attributes.description.GothDialogID=The start of the ID of the dialog that should play. Example, "baddytext" would use the dialog IDs "baddytext0", "baddytext1", etc.
+triggers.HonlyHelper/GothTattle.attributes.description.DialogAmount=The amount of dialogs you have that start with the GothDialogID.
+triggers.HonlyHelper/GothTattle.attributes.description.Loops=Whether the dialog should repeat from the first entry after playing the last one.
+triggers.HonlyHelper/GothTattle.attributes.description.Ends=Whether the trigger should disable after playing the last entry.
+
+# Turret Controller
+triggers.HonlyHelper/TurretController.placements.name.turret_controller=Turret Controller
+triggers.HonlyHelper/TurretController.attributes.description.turretID=The ID of the turret you want to affect.
+triggers.HonlyHelper/TurretController.attributes.description.turretAction=The action that the turret needs to do. Use the "GunOnly" options if you don't want helicopter sounds. Note: HeliFadeIn takes a long time to fade in (20 seconds roughly).
